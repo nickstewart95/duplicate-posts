@@ -1,0 +1,24 @@
+{
+    "name": "nickstewart/duplicateposts",
+    "autoload": {
+        "psr-4": {
+            "Nickstewart\\DuplicatePosts\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Nick Stewart",
+            "email": "nick@nickstewart.me"
+        }
+    ],
+	"config": {
+        "platform": {
+            "php": "8.0.0"
+        },    
+		"vendor-dir": "src/vendor"
+	},
+    "require": {
+        "guzzlehttp/guzzle": "^7.8",
+        "woocommerce/action-scheduler": "^3.7"
+    }
+}
