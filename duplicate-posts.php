@@ -12,7 +12,7 @@
  */
 
 if (file_exists(__DIR__ . '/src/vendor/autoload.php')) {
-	require_once __DIR__ . '/src/vendor.autoload.php';
+	require_once __DIR__ . '/src/vendor/autoload.php';
 }
 
 use Nickstewart\DuplicatePosts\DuplicatePosts;
