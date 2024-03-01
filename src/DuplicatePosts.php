@@ -150,7 +150,7 @@ class DuplicatePosts {
 	public function requestPosts($page): bool|array {
 		$base_url = apply_filters(
 			'duplicate_posts_site_url',
-			'https://yokoco.com',
+			'https://tjwrestling.com',
 		);
 		$base_url = $base_url . '/wp-json/wp/v2/'; // TODO - check for trailing slash
 
@@ -328,10 +328,14 @@ class DuplicatePosts {
 		delete_transient($transient);
 
 		// Check to see if post has been created
-		$local_post = false;
+		$existing_posts = $this->findExistingPosts();
+		$local_post = !empty($existing_posts[$post['id']])
+			? $existing_posts[$post['id']]
+			: false;
 
 		// Update or create
-		if (!empty($local_post)) {
+		if ($local_post) {
+			$data['ID'] = $local_post;
 			$post_id = wp_update_post($data);
 		} else {
 			$post_id = wp_insert_post($data);
@@ -393,5 +397,33 @@ class DuplicatePosts {
 		set_transient($name, $post, DAY_IN_SECONDS);
 
 		return $name;
+	}
+
+	/**
+	 * Find existing copied posts
+	 */
+	public function findExistingPosts(): array {
+		global $wpdb;
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"
+SELECT post_id, meta_value
+FROM {$wpdb->prefix}postmeta
+WHERE meta_key = %s
+",
+				'duplicate_posts_original_id',
+			),
+		);
+
+		$data = [];
+
+		if (!empty($results)) {
+			foreach ($results as $result) {
+				$data[$result->meta_value] = $result->post_id;
+			}
+		}
+
+		return $data;
 	}
 }

@@ -27,6 +27,7 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 ### Scheduled Events
 
 `fetch_posts` - Fetches posts per page and then creates events for each
+
 `create_post` - Creates/updates individual posts
 
 ## Todo
@@ -40,3 +41,4 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 - [ ] Refactor events related code into an Events class
 - [ ] Add filters to support multiple post types
 - [ ] Implement coding standards
+- [ ] Add timestamp when sync is completed
