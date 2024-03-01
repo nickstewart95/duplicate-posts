@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Plugin Name:       Sync Posts
+ * Plugin Name:       Sync Posts for Wordpress
  * Description:       Sync posts from one WordPress site to another
  * Version:           1.0.0
  * Requires PHP:      8.0

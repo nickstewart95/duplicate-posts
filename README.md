@@ -67,6 +67,6 @@ May or may not get to these todo items, more so if I have time and noticed I sho
 - [ ] Implement coding standards
 - [x] Add timestamp when sync for post is completed
 - [x] Add functionality to sync an individual posts
-- [ ] Rename the plugin for production use
+- [x] Rename the plugin for production use
 - [ ] Branding
 - [ ] Space the jobs out
