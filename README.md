@@ -33,7 +33,8 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 
 - [x] Meta box in post editor showing that the post has been copied
 - [x] Handle featured image
-- [ ] Handle taxonomy and categories
+- [x] Handle taxonomy and categories
+- [ ] Handle taxonomy and category parents
 - [ ] Better error handling and logging
 - [ ] Refactor REST related code into an API class
 - [ ] Refactor events related code into an Events class

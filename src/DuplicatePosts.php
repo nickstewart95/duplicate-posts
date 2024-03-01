@@ -150,7 +150,7 @@ class DuplicatePosts {
 	public function requestPosts($page): bool|array {
 		$base_url = apply_filters(
 			'duplicate_posts_site_url',
-			'https://tjwrestling.com',
+			'https://yokoco.com',
 		);
 		$base_url = $base_url . '/wp-json/wp/v2/'; // TODO - check for trailing slash
 
@@ -266,10 +266,15 @@ class DuplicatePosts {
 
 		$post = json_decode($post_transient, true);
 		$author = apply_filters('duplicate_posts_author_id', 1);
-		$featured_image_url =
-			$post['_embedded']['wp:featuredmedia'][0]['source_url'];
-		$featured_image_alt_text =
-			$post['_embedded']['wp:featuredmedia'][0]['alt_text'];
+
+		$featured_image_url = null;
+		$featured_image_alt_text = null;
+		if (!empty($post['_embedded']['wp:featuredmedia'][0]['source_url'])) {
+			$featured_image_url =
+				$post['_embedded']['wp:featuredmedia'][0]['source_url'] ?: '';
+			$featured_image_alt_text =
+				$post['_embedded']['wp:featuredmedia'][0]['alt_text'] ?: '';
+		}
 
 		// Meta from the post
 		$meta = $post['meta'];
@@ -280,6 +285,33 @@ class DuplicatePosts {
 			$post['modified_gmt'];
 		$meta['duplicate_posts_original_url'] = $post['link'];
 
+		// Setup the terms
+		$terms_parent = $post['_embedded']['wp:term'];
+		$category_ids = [];
+		$tag_ids = [];
+
+		foreach ($terms_parent as $terms) {
+			foreach ($terms as $term) {
+				if (empty($term['name'])) {
+					continue;
+				}
+
+				if ($term['taxonomy'] == 'category') {
+					$category_ids[] = $this->createOrFindTerm(
+						'category',
+						$term['name'],
+						$term['slug'],
+					);
+				} elseif ($term['taxonomy'] == 'post_tag') {
+					$tag_ids[] = $this->createOrFindTerm(
+						'post_tag',
+						$term['name'],
+						$term['slug'],
+					);
+				}
+			}
+		}
+
 		// Setup post attributes
 		$data = [
 			'post_title' => $post['title']['rendered'],
@@ -289,6 +321,8 @@ class DuplicatePosts {
 			'post_status' => $post['status'],
 			'post_author' => $author,
 			'post_type' => $post['type'],
+			'post_category' => $category_ids,
+			'tags_input' => $tag_ids,
 		];
 
 		delete_transient($transient);
@@ -303,11 +337,13 @@ class DuplicatePosts {
 			$post_id = wp_insert_post($data);
 		}
 
-		$this->setFeaturedImage(
-			$post_id,
-			$featured_image_url,
-			$featured_image_alt_text,
-		);
+		if ($featured_image_url) {
+			$this->setFeaturedImage(
+				$post_id,
+				$featured_image_url,
+				$featured_image_alt_text,
+			);
+		}
 
 		return;
 	}
@@ -328,6 +364,23 @@ class DuplicatePosts {
 		);
 
 		set_post_thumbnail($post_id, $featured_image_attachment);
+	}
+
+	/**
+	 * Create or find a term
+	 */
+	public function createOrFindTerm($term, $name, $slug = null): int {
+		$existing_term = term_exists($name, $term);
+
+		if ($existing_term) {
+			return $existing_term['term_id'];
+		}
+
+		$term = wp_insert_term($name, $term, [
+			'slug' => $slug,
+		]);
+
+		return $term['term_id'];
 	}
 
 	/**
