@@ -2,11 +2,12 @@
 
 namespace Nickstewart\SyncPosts;
 
+use Nickstewart\SyncPosts\Events;
+
+use Carbon\Carbon;
+
 define('SNYC_POSTS_VERSION', '1.0.0');
 define('SYNC_POSTS_FILE', __FILE__);
-
-use Nickstewart\SyncPosts\Events;
-use Carbon\Carbon;
 
 class SyncPosts {
 	private static $instance = null;

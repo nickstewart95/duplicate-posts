@@ -2,12 +2,9 @@
 
 namespace Nickstewart\SyncPosts;
 
-define('sync_POSTS_VERSION', '1.0.0');
-define('sync_POSTS_FILE', __FILE__);
+use Nickstewart\SyncPosts\SyncPosts;
 
 use GuzzleHttp\Client;
-
-use Nickstewart\SyncPosts\SyncPosts;
 
 class Posts {
 	/**

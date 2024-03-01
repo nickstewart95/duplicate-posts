@@ -2,13 +2,10 @@
 
 namespace Nickstewart\SyncPosts;
 
-define('sync_POSTS_VERSION', '1.0.0');
-define('sync_POSTS_FILE', __FILE__);
-
-use Carbon\Carbon;
-
 use Nickstewart\SyncPosts\SyncPosts;
 use Nickstewart\SyncPosts\Posts;
+
+use Carbon\Carbon;
 
 class Events {
 	/**
@@ -220,8 +217,6 @@ class Events {
 				$featured_image_alt_text,
 			);
 		}
-
-		return;
 	}
 
 	/**
@@ -303,7 +298,5 @@ WHERE meta_key = %s
 		}
 
 		self::schedulePostLoop($posts);
-
-		return;
 	}
 }
