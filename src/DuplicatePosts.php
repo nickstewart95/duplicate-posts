@@ -7,7 +7,6 @@ define('DUPLICATE_POSTS_FILE', __FILE__);
 
 use Nickstewart\DuplicatePosts\Events;
 use Carbon\Carbon;
-use GuzzleHttp\Client;
 
 class DuplicatePosts {
 	private static $instance = null;
@@ -44,7 +43,8 @@ class DuplicatePosts {
 	 * Setup actions
 	 */
 	public function initActions(): void {
-		add_action('duplicate_posts_sync', [Events::class, 'sync'], 10, 0);
+		add_action('duplicate_posts_sync', [$this, 'sync'], 10, 0);
+
 		add_action(
 			'duplicate_posts_fetch_posts',
 			[Events::class, 'fetchPosts'],
@@ -286,79 +286,6 @@ class DuplicatePosts {
 	 */
 	public function filters_log_errors($answer): bool {
 		return $answer;
-	}
-
-	/**
-	 * Helper function that returns a set of posts
-	 */
-	public static function requestPosts($page): bool|array {
-		$base_url = self::getSiteUrl();
-
-		$post_type = apply_filters(
-			'duplicate_posts_post_type_plural',
-			self::DEFAULT_POST_TYPE_PLURAL,
-		);
-
-		$posts_per_page = apply_filters(
-			'duplicate_posts_post_per_page',
-			self::DEFAULT_POSTS_PER_PAGE,
-		);
-
-		$client = new Client([
-			'base_uri' => $base_url,
-		]);
-
-		try {
-			$response = $client->request('GET', $post_type, [
-				'query' => [
-					'_embed' => 1,
-					'per_page' => $posts_per_page,
-					'page' => $page,
-				],
-			]);
-
-			if ($response->getStatusCode() !== 200) {
-				$error_message =
-					'Error fetching posts: ' . $response->getStatusCode();
-				self::logError($error_message);
-
-				return false;
-			}
-		} catch (\Exception $e) {
-			self::logError($e->getMessage());
-			return false;
-		}
-
-		$page_count = $response->getHeader('X-WP-TotalPages')[0];
-
-		$posts = [];
-		$posts['posts'] = json_decode($response->getBody(), true);
-		$posts['page_count'] = $page_count;
-
-		return $posts;
-	}
-
-	/**
-	 * Loop thru the posts array and schedule the post creation
-	 */
-	public static function schedulePostLoop($posts): void {
-		if (empty($posts)) {
-			return;
-		}
-
-		foreach ($posts as $post) {
-			// Post data is too large to pass to action, so we will store it temporarliy to pass and then delete
-			$transient = self::postTransient($post, true);
-
-			as_schedule_single_action(
-				time(),
-				'duplicate_posts_create_post',
-				[
-					'transient' => $transient,
-				],
-				'duplicate_posts_create',
-			);
-		}
 	}
 
 	/**

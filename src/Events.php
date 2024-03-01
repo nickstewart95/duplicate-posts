@@ -6,16 +6,16 @@ define('DUPLICATE_POSTS_VERSION', '1.0.0');
 define('DUPLICATE_POSTS_FILE', __FILE__);
 
 use Carbon\Carbon;
-use GuzzleHttp\Client;
 
 use Nickstewart\DuplicatePosts\DuplicatePosts;
+use Nickstewart\DuplicatePosts\Posts;
 
 class Events {
 	/**
 	 * Fetch each set of posts and schedule each one
 	 */
 	public static function fetchPosts($page): void {
-		$response = DuplicatePosts::requestPosts($page);
+		$response = Posts::requestPosts($page);
 
 		if (!$response) {
 			return;
@@ -23,14 +23,14 @@ class Events {
 
 		$posts = $response['posts'];
 
-		DuplicatePosts::schedulePostLoop($posts);
+		self::schedulePostLoop($posts);
 	}
 
 	/**
 	 * Schedule the posts per page to prevent timeouts
 	 */
 	public static function schedulePosts(): void {
-		$response = DuplicatePosts::requestPosts(1);
+		$response = Posts::requestPosts(1);
 
 		if (!$response) {
 			return;
@@ -39,7 +39,7 @@ class Events {
 		$page_count = $response['page_count'];
 		$posts = $response['posts'];
 
-		DuplicatePosts::schedulePostLoop($posts);
+		self::schedulePostLoop($posts);
 
 		// Schedule the additional requests
 		for ($i = 2; $i < $page_count + 1; $i++) {
@@ -94,6 +94,29 @@ class Events {
 			true,
 			10,
 		);
+	}
+
+	/**
+	 * Loop thru the posts array and schedule the post creation
+	 */
+	public static function schedulePostLoop($posts): void {
+		if (empty($posts)) {
+			return;
+		}
+
+		foreach ($posts as $post) {
+			// Post data is too large to pass to action, so we will store it temporarliy to pass and then delete
+			$transient = DuplicatePosts::postTransient($post, true);
+
+			as_schedule_single_action(
+				time(),
+				'duplicate_posts_create_post',
+				[
+					'transient' => $transient,
+				],
+				'duplicate_posts_create',
+			);
+		}
 	}
 
 	/**
@@ -270,48 +293,13 @@ WHERE meta_key = %s
 	 * Sync a single post
 	 */
 	public static function syncPost($post_id): void {
-		$original_post_id = get_post_meta(
-			$post_id,
-			'duplicate_posts_original_id',
-			true,
-		);
+		$posts = Posts::requestPost($post_id);
 
-		$original_post_id_stripped = DuplicatePosts::stripPostId(
-			$original_post_id,
-		);
-
-		$base_url = DuplicatePosts::getSiteUrl();
-
-		$post_type = apply_filters(
-			'duplicate_posts_post_type_plural',
-			DuplicatePosts::DEFAULT_POST_TYPE_PLURAL,
-		);
-
-		$client = new Client([
-			'base_uri' => $base_url,
-		]);
-
-		try {
-			$response = $client->request('GET', $post_type, [
-				'query' => [
-					'_embed' => 1,
-					'include' => $original_post_id_stripped,
-				],
-			]);
-
-			if ($response->getStatusCode() !== 200) {
-				$error_message =
-					'Error fetching single post: ' . $response->getStatusCode();
-				DuplicatePosts::logError($error_message);
-			}
-		} catch (\Exception $e) {
-			DuplicatePosts::logError($e->getMessage());
+		if (empty($posts)) {
 			return;
 		}
 
-		$posts = json_decode($response->getBody(), true);
-
-		DuplicatePosts::schedulePostLoop($posts);
+		self::schedulePostLoop($posts);
 
 		return;
 	}
