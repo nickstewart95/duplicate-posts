@@ -162,7 +162,11 @@ class DuplicatePosts {
 
 		try {
 			$response = $client->request('GET', 'posts', [
-				'query' => ['per_page' => $posts_per_page, 'page' => $page],
+				'query' => [
+					'_embed' => 1,
+					'per_page' => $posts_per_page,
+					'page' => $page,
+				],
 			]);
 
 			if ($response->getStatusCode() !== 200) {
@@ -261,8 +265,11 @@ class DuplicatePosts {
 		}
 
 		$post = json_decode($post_transient, true);
-
 		$author = apply_filters('duplicate_posts_author_id', 1);
+		$featured_image_url =
+			$post['_embedded']['wp:featuredmedia'][0]['source_url'];
+		$featured_image_alt_text =
+			$post['_embedded']['wp:featuredmedia'][0]['alt_text'];
 
 		// Meta from the post
 		$meta = $post['meta'];
@@ -276,8 +283,6 @@ class DuplicatePosts {
 		// Setup post attributes
 		$data = [
 			'post_title' => $post['title']['rendered'],
-			'post_date' => $post['date'],
-			'post_date_gmt' => $post['date_gmt'],
 			'post_excerpt' => $post['excerpt']['rendered'],
 			'meta_input' => $meta,
 			'post_content' => $post['content']['rendered'],
@@ -291,17 +296,38 @@ class DuplicatePosts {
 		// Check to see if post has been created
 		$local_post = false;
 
-		// Update
+		// Update or create
 		if (!empty($local_post)) {
-			wp_update_post($data);
-
-			return;
+			$post_id = wp_update_post($data);
+		} else {
+			$post_id = wp_insert_post($data);
 		}
 
-		// Create
-		wp_insert_post($data);
+		$this->setFeaturedImage(
+			$post_id,
+			$featured_image_url,
+			$featured_image_alt_text,
+		);
 
 		return;
+	}
+
+	/**
+	 * Download the featured image and set it as featured image on the new post
+	 */
+	public function setFeaturedImage(
+		$post_id,
+		$featured_image_url,
+		$description = null
+	): void {
+		$featured_image_attachment = media_sideload_image(
+			$featured_image_url,
+			$post_id,
+			$description,
+			'id',
+		);
+
+		set_post_thumbnail($post_id, $featured_image_attachment);
 	}
 
 	/**
