@@ -11,6 +11,13 @@ use GuzzleHttp\Client;
 class DuplicatePosts {
 	private static $instance = null;
 
+	public string $default_sync_schedule = '';
+	public string $default_site_url = 'https://tjwrestling.com';
+	public int $default_posts_per_page = 10;
+	public int $default_posts_author_id = 1;
+	public string $default_posts_post_type_single = 'post';
+	public string $default_posts_post_type_plural = 'posts';
+
 	/**
 	 * Class instance
 	 */
@@ -81,8 +88,15 @@ class DuplicatePosts {
 		);
 
 		add_filter(
-			'duplicate_posts_post_type',
-			[$this, 'filters_post_type'],
+			'duplicate_posts_post_type_single',
+			[$this, 'filters_post_type_single'],
+			10,
+			1,
+		);
+
+		add_filter(
+			'duplicate_posts_post_type_plural',
+			[$this, 'filters_post_type_plural'],
 			10,
 			1,
 		);
@@ -142,7 +156,10 @@ class DuplicatePosts {
 	 * Call the metabox creation
 	 */
 	public function add_metabox_to_posts(): void {
-		$post_type = apply_filters('duplicate_posts_post_type', 'post');
+		$post_type = apply_filters(
+			'duplicate_posts_post_type_single',
+			$this->default_posts_post_type_single,
+		);
 
 		add_meta_box(
 			'duplicate_posts_post_information',
@@ -273,9 +290,16 @@ class DuplicatePosts {
 	}
 
 	/**
+	 * The post type used for adding the metabox
+	 */
+	public function filters_post_type_single($post_type): string {
+		return $post_type;
+	}
+
+	/**
 	 * The post type used when hitting the REST API
 	 */
-	public function filters_post_type($post_type): string {
+	public function filters_post_type_plural($post_type): string {
 		return $post_type;
 	}
 
@@ -285,10 +309,15 @@ class DuplicatePosts {
 	public function requestPosts($page): bool|array {
 		$base_url = $this->getSiteUrl();
 
-		// TODO - fix plural case
-		$post_type = apply_filters('duplicate_posts_post_type', 'posts');
+		$post_type = apply_filters(
+			'duplicate_posts_post_type_plural',
+			$this->default_posts_post_type_plural,
+		);
 
-		$posts_per_page = apply_filters('duplicate_posts_post_per_page', 10);
+		$posts_per_page = apply_filters(
+			'duplicate_posts_post_per_page',
+			$this->default_posts_per_page,
+		);
 
 		$client = new Client([
 			'base_uri' => $base_url,
@@ -396,7 +425,10 @@ class DuplicatePosts {
 		}
 
 		$post = json_decode($post_transient, true);
-		$author = apply_filters('duplicate_posts_author_id', 1);
+		$author = apply_filters(
+			'duplicate_posts_author_id',
+			$this->default_posts_author_id,
+		);
 
 		$featured_image_url = null;
 		$featured_image_alt_text = null;
@@ -500,8 +532,10 @@ class DuplicatePosts {
 
 		$base_url = $this->getSiteUrl();
 
-		// TODO - fix plural case
-		$post_type = apply_filters('duplicate_posts_post_type', 'posts');
+		$post_type = apply_filters(
+			'duplicate_posts_post_type_plural',
+			$this->default_posts_post_type_plural,
+		);
 
 		$client = new Client([
 			'base_uri' => $base_url,
@@ -611,7 +645,7 @@ WHERE meta_key = %s
 	public function getSiteUrl(): string {
 		$base_url = apply_filters(
 			'duplicate_posts_site_url',
-			'https://tjwrestling.com',
+			$this->default_site_url,
 		);
 
 		$base_url = rtrim($base_url, '/');
@@ -627,7 +661,7 @@ WHERE meta_key = %s
 
 		$base_url = apply_filters(
 			'duplicate_posts_site_url',
-			'https://tjwrestling.com',
+			$this->default_site_url,
 		);
 
 		$url_array = parse_url($base_url);

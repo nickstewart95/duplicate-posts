@@ -22,7 +22,9 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 
 `duplicate_posts_author_id` - The author ID copied posts are associated with
 
-`duplicate_posts_post_type` - The post type being retrieved
+`duplicate_posts_post_type_single` - The post type being retrieved, singular form
+
+`duplicate_posts_post_type_plural` - The post type being retrieved, plural form
 
 ### Actions
 
