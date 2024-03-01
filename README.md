@@ -20,6 +20,8 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 
 `duplicate_posts_author_id` - The author ID copied posts are associated with
 
+`duplicate_posts_post_type` - The post type being retrieved
+
 ### Actions
 
 `duplicate_posts_sync` - Starts the sync
@@ -39,6 +41,6 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 - [ ] Better error handling and logging
 - [ ] Refactor REST related code into an API class
 - [ ] Refactor events related code into an Events class
-- [ ] Add filters to support multiple post types
+- [x] Add filters to support multiple post types
 - [ ] Implement coding standards
 - [ ] Add timestamp when sync is completed

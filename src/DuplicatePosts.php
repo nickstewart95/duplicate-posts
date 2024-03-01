@@ -71,6 +71,13 @@ class DuplicatePosts {
 			10,
 			1,
 		);
+
+		add_filter(
+			'duplicate_posts_post_type',
+			[$this, 'filters_post_type'],
+			10,
+			1,
+		);
 	}
 
 	/**
@@ -85,11 +92,13 @@ class DuplicatePosts {
 	 * Call the metabox creation
 	 */
 	public function add_metabox_to_posts(): void {
+		$post_type = apply_filters('duplicate_posts_post_type', 'posts');
+
 		add_meta_box(
 			'duplicate_posts_post_information',
 			'Duplicate Post Information',
 			[$this, 'create_post_metabox'],
-			'post',
+			$post_type,
 			'side',
 			'high',
 		);
@@ -145,6 +154,13 @@ class DuplicatePosts {
 	}
 
 	/**
+	 * The post type used when hitting the REST API
+	 */
+	public function filters_post_type($post_type): string {
+		return $post_type;
+	}
+
+	/**
 	 * Helper function that returns a set of posts
 	 */
 	public function requestPosts($page): bool|array {
@@ -154,6 +170,8 @@ class DuplicatePosts {
 		);
 		$base_url = $base_url . '/wp-json/wp/v2/'; // TODO - check for trailing slash
 
+		$post_type = apply_filters('duplicate_posts_post_type', 'posts');
+
 		$posts_per_page = apply_filters('duplicate_posts_post_per_page', 10);
 
 		$client = new Client([
@@ -161,7 +179,7 @@ class DuplicatePosts {
 		]);
 
 		try {
-			$response = $client->request('GET', 'posts', [
+			$response = $client->request('GET', $post_type, [
 				'query' => [
 					'_embed' => 1,
 					'per_page' => $posts_per_page,
