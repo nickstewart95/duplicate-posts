@@ -12,6 +12,8 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 
 ## Dev Guide
 
+Errors are logged to error.log inside the plugin folder
+
 ### Filters
 
 `duplicate_posts_sync_schedule` - The cron schedule for how often the sync runs
