@@ -31,7 +31,7 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 
 ## Todo
 
-- [ ] Meta box in post editor showing that the post has been copied
+- [x] Meta box in post editor showing that the post has been copied
 - [ ] Handle featured image
 - [ ] Handle taxonomy and categories
 - [ ] Better error handling and logging

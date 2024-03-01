@@ -5,6 +5,7 @@ namespace Nickstewart\DuplicatePosts;
 define('DUPLICATE_POSTS_VERSION', '1.0.0');
 define('DUPLICATE_POSTS_FILE', __FILE__);
 
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 
 class DuplicatePosts {
@@ -36,6 +37,7 @@ class DuplicatePosts {
 		add_action('duplicate_posts_sync', [$this, 'sync'], 10, 0);
 		add_action('duplicate_posts_fetch_posts', [$this, 'fetchPosts'], 10, 1);
 		add_action('duplicate_posts_create_post', [$this, 'createPost'], 10, 1);
+		add_action('admin_menu', [$this, 'add_metabox_to_posts']);
 	}
 
 	/**
@@ -77,6 +79,41 @@ class DuplicatePosts {
 	public function sync(): void {
 		$api = new DuplicatePosts();
 		$api->schedulePosts();
+	}
+
+	/**
+	 * Call the metabox creation
+	 */
+	public function add_metabox_to_posts(): void {
+		add_meta_box(
+			'duplicate_posts_post_information',
+			'Duplicate Post Information',
+			[$this, 'create_post_metabox'],
+			'post',
+			'side',
+			'high',
+		);
+	}
+
+	/**
+	 * Create the metabox content
+	 */
+	public function create_post_metabox($post) {
+		$post_id = $post->ID;
+
+		$user_timezone = wp_timezone_string();
+		$modification_date = get_post_meta(
+			$post_id,
+			'duplicate_posts_original_modification_date',
+			true,
+		);
+		$modification_date_formatted = Carbon::parse($modification_date)
+			->setTimezone($user_timezone)
+			->format('M d, Y');
+
+		$url = get_post_meta($post_id, 'duplicate_posts_original_url', true);
+
+		echo "<b>URL:</b> <a href='{$url}' target='_blank'>{$url}</a><br /><b>Last modified:</b> {$modification_date_formatted}";
 	}
 
 	/**
