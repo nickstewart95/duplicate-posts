@@ -5,6 +5,7 @@ namespace Nickstewart\DuplicatePosts;
 define('DUPLICATE_POSTS_VERSION', '1.0.0');
 define('DUPLICATE_POSTS_FILE', __FILE__);
 
+use Nickstewart\DuplicatePosts\Events;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 
@@ -36,22 +37,33 @@ class DuplicatePosts {
 	public function setup(): void {
 		add_action('init', [$this, 'initActions']);
 		add_action('init', [$this, 'initFilters']);
-		add_action('action_scheduler_init', [$this, 'scheduleSync']);
+		add_action('action_scheduler_init', [Events::class, 'scheduleSync']);
 	}
 
 	/**
 	 * Setup actions
 	 */
 	public function initActions(): void {
-		add_action('duplicate_posts_sync', [$this, 'sync'], 10, 0);
-		add_action('duplicate_posts_fetch_posts', [$this, 'fetchPosts'], 10, 1);
-		add_action('duplicate_posts_create_post', [$this, 'createPost'], 10, 1);
+		add_action('duplicate_posts_sync', [Events::class, 'sync'], 10, 0);
 		add_action(
-			'duplicate_posts_sync_single_post',
-			[$this, 'syncPost'],
+			'duplicate_posts_fetch_posts',
+			[Events::class, 'fetchPosts'],
 			10,
 			1,
 		);
+		add_action(
+			'duplicate_posts_create_post',
+			[Events::class, 'createPost'],
+			10,
+			1,
+		);
+		add_action(
+			'duplicate_posts_sync_single_post',
+			[Events::class, 'syncPost'],
+			10,
+			1,
+		);
+
 		add_action('admin_menu', [$this, 'add_metabox_to_posts']);
 		add_action('wp_loaded', [$this, 'check_for_manual_sync']);
 	}
@@ -114,50 +126,8 @@ class DuplicatePosts {
 	 * The sync action that basically runs the plugin
 	 */
 	public function sync(): void {
-		$api = new DuplicatePosts();
-		$api->schedulePosts();
-	}
-
-	/**
-	 * Schedule the main sync to run on a cron like schedule
-	 */
-	public function scheduleSync(): void {
-		$scheduled_job = as_get_scheduled_actions(
-			[
-				'hook' => 'duplicate_posts_sync_schedule',
-				'group' => 'duplicate_posts_daily_sync',
-			],
-			'ARRAY_A',
-		);
-
-		$schedule = apply_filters(
-			'duplicate_posts_sync_schedule',
-			self::DEFAULT_SYNC_SCHEDULE,
-		);
-
-		// Check if the schedule has changed, if so update it
-		if (!empty($scheduled_job)) {
-			if ($scheduled_job['schedule'] != $schedule) {
-				as_unschedule_all_actions(
-					'duplicate_posts_sync_schedule',
-					[],
-					'duplicate_posts_daily_sync',
-				);
-			} else {
-				return;
-			}
-		}
-
-		// Schedule the sync
-		as_schedule_cron_action(
-			time(),
-			$schedule,
-			'duplicate_posts_sync',
-			[],
-			'duplicate_posts_daily_sync',
-			true,
-			10,
-		);
+		$events = new Events();
+		$events->schedulePosts();
 	}
 
 	/**
@@ -321,8 +291,8 @@ class DuplicatePosts {
 	/**
 	 * Helper function that returns a set of posts
 	 */
-	public function requestPosts($page): bool|array {
-		$base_url = $this->getSiteUrl();
+	public static function requestPosts($page): bool|array {
+		$base_url = self::getSiteUrl();
 
 		$post_type = apply_filters(
 			'duplicate_posts_post_type_plural',
@@ -350,12 +320,12 @@ class DuplicatePosts {
 			if ($response->getStatusCode() !== 200) {
 				$error_message =
 					'Error fetching posts: ' . $response->getStatusCode();
-				$this->logError($error_message);
+				self::logError($error_message);
 
 				return false;
 			}
 		} catch (\Exception $e) {
-			$this->logError($e->getMessage());
+			self::logError($e->getMessage());
 			return false;
 		}
 
@@ -369,59 +339,16 @@ class DuplicatePosts {
 	}
 
 	/**
-	 * Fetch each set of posts and schedule each one
-	 */
-	public function fetchPosts($page): void {
-		$response = $this->requestPosts($page);
-
-		if (!$response) {
-			return;
-		}
-
-		$posts = $response['posts'];
-
-		$this->schedulePostLoop($posts);
-	}
-
-	/**
-	 * Schedule the posts per page to prevent timeouts
-	 */
-	public function schedulePosts(): void {
-		$response = $this->requestPosts(1);
-
-		if (!$response) {
-			return;
-		}
-
-		$page_count = $response['page_count'];
-		$posts = $response['posts'];
-
-		$this->schedulePostLoop($posts);
-
-		// Schedule the additional requests
-		for ($i = 2; $i < $page_count + 1; $i++) {
-			as_schedule_single_action(
-				time(),
-				'duplicate_posts_fetch_posts',
-				[
-					'page' => $i,
-				],
-				'duplicate_posts_fetch',
-			);
-		}
-	}
-
-	/**
 	 * Loop thru the posts array and schedule the post creation
 	 */
-	public function schedulePostLoop($posts): void {
+	public static function schedulePostLoop($posts): void {
 		if (empty($posts)) {
 			return;
 		}
 
 		foreach ($posts as $post) {
 			// Post data is too large to pass to action, so we will store it temporarliy to pass and then delete
-			$transient = $this->postTransient($post, true);
+			$transient = self::postTransient($post, true);
 
 			as_schedule_single_action(
 				time(),
@@ -435,200 +362,10 @@ class DuplicatePosts {
 	}
 
 	/**
-	 * Create or update post
-	 */
-	public function createPost($transient): void {
-		$post_transient = get_transient($transient);
-
-		if (empty($post_transient)) {
-			$this->logError('Could not fetch post transient');
-
-			return;
-		}
-
-		$post = json_decode($post_transient, true);
-		$author = apply_filters(
-			'duplicate_posts_author_id',
-			self::DEFAULT_POSTS_AUTHOR_ID,
-		);
-
-		$featured_image_url = null;
-		$featured_image_alt_text = null;
-		if (!empty($post['_embedded']['wp:featuredmedia'][0]['source_url'])) {
-			$featured_image_url =
-				$post['_embedded']['wp:featuredmedia'][0]['source_url'] ?: '';
-			$featured_image_alt_text =
-				$post['_embedded']['wp:featuredmedia'][0]['alt_text'] ?: '';
-		}
-
-		// Meta from the post
-		$meta = $post['meta'];
-
-		$mutated_id = $this->mutatePostId($post['id']);
-
-		// Plugin custom meta
-		$meta['duplicate_posts_original_id'] = $mutated_id;
-		$meta['duplicate_posts_original_modification_date'] =
-			$post['modified_gmt'];
-		$meta['duplicate_posts_original_url'] = $post['link'];
-		$meta['duplicate_posts_last_synced_date_gtm'] = Carbon::now('UTC');
-
-		// Setup the terms
-		$terms_parent = $post['_embedded']['wp:term'];
-		$category_ids = [];
-		$tag_ids = [];
-
-		foreach ($terms_parent as $terms) {
-			foreach ($terms as $term) {
-				if (empty($term['name'])) {
-					continue;
-				}
-
-				if ($term['taxonomy'] == 'category') {
-					$category_ids[] = $this->createOrFindTerm(
-						'category',
-						$term['name'],
-						$term['slug'],
-					);
-				} elseif ($term['taxonomy'] == 'post_tag') {
-					$tag_ids[] = $this->createOrFindTerm(
-						'post_tag',
-						$term['name'],
-						$term['slug'],
-					);
-				}
-			}
-		}
-
-		// Setup post attributes
-		$data = [
-			'post_title' => $post['title']['rendered'],
-			'post_excerpt' => $post['excerpt']['rendered'],
-			'meta_input' => $meta,
-			'post_content' => $post['content']['rendered'],
-			'post_status' => $post['status'],
-			'post_author' => $author,
-			'post_type' => $post['type'],
-			'post_category' => $category_ids,
-			'tags_input' => $tag_ids,
-		];
-
-		delete_transient($transient);
-
-		// Check to see if post has been created
-		$existing_posts = $this->findExistingPosts();
-		$local_post = !empty($existing_posts[$mutated_id])
-			? $existing_posts[$mutated_id]
-			: false;
-
-		// Update or create
-		if ($local_post) {
-			$data['ID'] = $local_post;
-			$post_id = wp_update_post($data);
-		} else {
-			$post_id = wp_insert_post($data);
-		}
-
-		if ($featured_image_url) {
-			$this->setFeaturedImage(
-				$post_id,
-				$featured_image_url,
-				$featured_image_alt_text,
-			);
-		}
-
-		return;
-	}
-
-	/**
-	 * Sync a single post
-	 */
-	public function syncPost($post_id): void {
-		$original_post_id = get_post_meta(
-			$post_id,
-			'duplicate_posts_original_id',
-			true,
-		);
-
-		$original_post_id_stripped = $this->stripPostId($original_post_id);
-
-		$base_url = $this->getSiteUrl();
-
-		$post_type = apply_filters(
-			'duplicate_posts_post_type_plural',
-			self::DEFAULT_POST_TYPE_PLURAL,
-		);
-
-		$client = new Client([
-			'base_uri' => $base_url,
-		]);
-
-		try {
-			$response = $client->request('GET', $post_type, [
-				'query' => [
-					'_embed' => 1,
-					'include' => $original_post_id_stripped,
-				],
-			]);
-
-			if ($response->getStatusCode() !== 200) {
-				$error_message =
-					'Error fetching single post: ' . $response->getStatusCode();
-				$this->logError($error_message);
-			}
-		} catch (\Exception $e) {
-			$this->logError($e->getMessage());
-			return;
-		}
-
-		$posts = json_decode($response->getBody(), true);
-
-		$this->schedulePostLoop($posts);
-
-		return;
-	}
-
-	/**
-	 * Download the featured image and set it as featured image on the new post
-	 */
-	public function setFeaturedImage(
-		$post_id,
-		$featured_image_url,
-		$description = null
-	): void {
-		// TODO - error handling, can result in timeout errors
-		$featured_image_attachment = media_sideload_image(
-			$featured_image_url,
-			$post_id,
-			$description,
-			'id',
-		);
-
-		set_post_thumbnail($post_id, $featured_image_attachment);
-	}
-
-	/**
-	 * Create or find a term
-	 */
-	public function createOrFindTerm($term, $name, $slug = null): int {
-		$existing_term = term_exists($name, $term);
-
-		if ($existing_term) {
-			return $existing_term['term_id'];
-		}
-
-		$term = wp_insert_term($name, $term, [
-			'slug' => $slug,
-		]);
-
-		return $term['term_id'];
-	}
-
-	/**
 	 * Return a post transient name with the option to create it
 	 */
-	public function postTransient($post, $create = false): string {
-		$post_id = $this->mutatePostId($post['id']);
+	public static function postTransient($post, $create = false): string {
+		$post_id = self::mutatePostId($post['id']);
 
 		$name = 'duplicate_posts_temp_' . $post_id;
 
@@ -642,37 +379,9 @@ class DuplicatePosts {
 	}
 
 	/**
-	 * Find existing copied posts
-	 */
-	public function findExistingPosts(): array {
-		global $wpdb;
-
-		$results = $wpdb->get_results(
-			$wpdb->prepare(
-				"
-SELECT post_id, meta_value
-FROM {$wpdb->prefix}postmeta
-WHERE meta_key = %s
-",
-				'duplicate_posts_original_id',
-			),
-		);
-
-		$data = [];
-
-		if (!empty($results)) {
-			foreach ($results as $result) {
-				$data[$result->meta_value] = $result->post_id;
-			}
-		}
-
-		return $data;
-	}
-
-	/**
 	 * Get the site url for the API
 	 */
-	public function getSiteUrl(): string {
+	public static function getSiteUrl(): string {
 		$base_url = apply_filters(
 			'duplicate_posts_site_url',
 			self::DEFAULT_SITE_URL,
@@ -686,7 +395,7 @@ WHERE meta_key = %s
 	/**
 	 * Append site url to post id
 	 */
-	public function mutatePostId($id): string {
+	public static function mutatePostId($id): string {
 		//site url with id append
 
 		$base_url = apply_filters(
@@ -708,7 +417,7 @@ WHERE meta_key = %s
 	/**
 	 * Transform mutated post id back to just an id
 	 */
-	public function stripPostId($id): string {
+	public static function stripPostId($id): string {
 		$id_parts = explode('_', $id);
 
 		return end($id_parts);

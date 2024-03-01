@@ -62,7 +62,7 @@ May or may not get to these todo items, more so if I have time and noticed I sho
 - [ ] Handle taxonomy and category parents
 - [x] Better error handling and logging
 - [ ] Refactor REST related code into an API class
-- [ ] Refactor events related code into an Events class
+- [x] Refactor events related code into an Events class
 - [x] Add filters to support multiple post types
 - [ ] Implement coding standards
 - [x] Add timestamp when sync for post is completed
