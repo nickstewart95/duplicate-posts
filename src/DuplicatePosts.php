@@ -11,13 +11,13 @@ use GuzzleHttp\Client;
 class DuplicatePosts {
 	private static $instance = null;
 
-	public string $default_sync_schedule = '0 4,14 * * *';
-	public string $default_site_url = 'https://tjwrestling.com';
-	public int $default_posts_per_page = 10;
-	public int $default_posts_author_id = 1;
-	public string $default_post_type_single = 'post';
-	public string $default_post_type_plural = 'posts';
-	public bool $default_log_errors = true;
+	const DEFAULT_SYNC_SCHEDULE = '0 4,14 * * *';
+	const DEFAULT_SITE_URL = 'https://tjwrestling.com';
+	const DEFAULT_POSTS_PER_PAGE = 10;
+	const DEFAULT_POSTS_AUTHOR_ID = 1;
+	const DEFAULT_POST_TYPE_SINGLE = 'post';
+	const DEFAULT_POST_TYPE_PLURAL = 'posts';
+	const DEFAULT_LOG_ERRORS = true;
 
 	/**
 	 * Class instance
@@ -132,7 +132,7 @@ class DuplicatePosts {
 
 		$schedule = apply_filters(
 			'duplicate_posts_sync_schedule',
-			$this->default_sync_schedule,
+			self::DEFAULT_SYNC_SCHEDULE,
 		);
 
 		// Check if the schedule has changed, if so update it
@@ -166,7 +166,7 @@ class DuplicatePosts {
 	public function add_metabox_to_posts(): void {
 		$post_type = apply_filters(
 			'duplicate_posts_post_type_single',
-			$this->default_post_type_single,
+			self::DEFAULT_POST_TYPE_SINGLE,
 		);
 
 		add_meta_box(
@@ -326,12 +326,12 @@ class DuplicatePosts {
 
 		$post_type = apply_filters(
 			'duplicate_posts_post_type_plural',
-			$this->default_post_type_plural,
+			self::DEFAULT_POST_TYPE_PLURAL,
 		);
 
 		$posts_per_page = apply_filters(
 			'duplicate_posts_post_per_page',
-			$this->default_posts_per_page,
+			self::DEFAULT_POSTS_PER_PAGE,
 		);
 
 		$client = new Client([
@@ -449,7 +449,7 @@ class DuplicatePosts {
 		$post = json_decode($post_transient, true);
 		$author = apply_filters(
 			'duplicate_posts_author_id',
-			$this->default_posts_author_id,
+			self::DEFAULT_POSTS_AUTHOR_ID,
 		);
 
 		$featured_image_url = null;
@@ -556,7 +556,7 @@ class DuplicatePosts {
 
 		$post_type = apply_filters(
 			'duplicate_posts_post_type_plural',
-			$this->default_post_type_plural,
+			self::DEFAULT_POST_TYPE_PLURAL,
 		);
 
 		$client = new Client([
@@ -675,7 +675,7 @@ WHERE meta_key = %s
 	public function getSiteUrl(): string {
 		$base_url = apply_filters(
 			'duplicate_posts_site_url',
-			$this->default_site_url,
+			self::DEFAULT_SITE_URL,
 		);
 
 		$base_url = rtrim($base_url, '/');
@@ -691,7 +691,7 @@ WHERE meta_key = %s
 
 		$base_url = apply_filters(
 			'duplicate_posts_site_url',
-			$this->default_site_url,
+			self::DEFAULT_SITE_URL,
 		);
 
 		$url_array = parse_url($base_url);
@@ -717,10 +717,10 @@ WHERE meta_key = %s
 	/**
 	 * Write to local log
 	 */
-	public function logError($error_message): void {
+	public static function logError($error_message): void {
 		$log_errors = apply_filters(
 			'duplicate_posts_log_errors',
-			$this->default_log_errors,
+			self::DEFAULT_LOG_ERRORS,
 		);
 
 		if (!$log_errors) {
