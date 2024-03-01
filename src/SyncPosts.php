@@ -131,7 +131,7 @@ class SyncPosts {
 
 		add_meta_box(
 			'sync_posts_post_information',
-			'sync Post Information',
+			'Sync Post Information',
 			[$this, 'create_post_metabox'],
 			$post_type,
 			'side',
