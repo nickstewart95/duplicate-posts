@@ -410,8 +410,10 @@ class DuplicatePosts {
 		// Meta from the post
 		$meta = $post['meta'];
 
+		$mutated_id = $this->mutatePostId($post['id']);
+
 		// Plugin custom meta
-		$meta['duplicate_posts_original_id'] = $post['id'];
+		$meta['duplicate_posts_original_id'] = $mutated_id;
 		$meta['duplicate_posts_original_modification_date'] =
 			$post['modified_gmt'];
 		$meta['duplicate_posts_original_url'] = $post['link'];
@@ -461,7 +463,7 @@ class DuplicatePosts {
 
 		// Check to see if post has been created
 		$existing_posts = $this->findExistingPosts();
-		$local_post = !empty($existing_posts[$post['id']])
+		$local_post = !empty($existing_posts[$mutated_id])
 			? $existing_posts[$post['id']]
 			: false;
 
@@ -488,8 +490,10 @@ class DuplicatePosts {
 	 * Sync a single post
 	 */
 	public function syncPost($post_id): void {
+		$mutated_id = $this->mutatePostId($post_id);
+
 		$original_post_id = get_post_meta(
-			$post_id,
+			$mutated_id,
 			'duplicate_posts_original_id',
 			true,
 		);
@@ -613,5 +617,27 @@ WHERE meta_key = %s
 		$base_url = rtrim($base_url, '/');
 
 		return $base_url . '/wp-json/wp/v2/';
+	}
+
+	/**
+	 * Append site url to post id
+	 */
+	public function mutatePostId($id): string {
+		//site url with id append
+
+		$base_url = apply_filters(
+			'duplicate_posts_site_url',
+			'https://tjwrestling.com',
+		);
+
+		$url_array = parse_url($base_url);
+		$host = $url_array['host'];
+		$host_url_parts = explode('.', $host);
+
+		array_pop($host_url_parts);
+
+		$host_top_level = end($host_url_parts);
+
+		return $host_url_parts . '_' . $id;
 	}
 }

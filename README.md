@@ -38,7 +38,7 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 
 ### Meta Data
 
-`duplicate_posts_original_id` - The post ID from the source site
+`duplicate_posts_original_id` - The post ID from the source site, prepended with the top level domain it came from
 
 `duplicate_posts_original_modification_date` - The last modified date from the source site
 
@@ -47,6 +47,8 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 `duplicate_posts_last_synced_date_gtm` -The last time the post was synced over
 
 ## Todo
+
+May or may not get to these todo items, more so if I have time and noticed I should add something or make it better
 
 - [x] Meta box in post editor showing that the post has been copied
 - [x] Handle featured image
@@ -60,3 +62,4 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 - [x] Add timestamp when sync for post is completed
 - [x] Add functionality to sync an individual posts
 - [ ] Rename the plugin for production use
+- [ ] Space the jobs out
