@@ -14,7 +14,7 @@ class Events {
 	/**
 	 * Fetch each set of posts and schedule each one
 	 */
-	public static function fetchPosts($page): void {
+	public static function fetchPosts(int $page): void {
 		$response = Posts::requestPosts($page);
 
 		if (!$response) {
@@ -99,7 +99,7 @@ class Events {
 	/**
 	 * Loop thru the posts array and schedule the post creation
 	 */
-	public static function schedulePostLoop($posts): void {
+	public static function schedulePostLoop(array|null $posts): void {
 		if (empty($posts)) {
 			return;
 		}
@@ -122,7 +122,7 @@ class Events {
 	/**
 	 * Create or update post
 	 */
-	public static function createPost($transient): void {
+	public static function createPost(string $transient): void {
 		$post_transient = get_transient($transient);
 
 		if (empty($post_transient)) {
@@ -227,7 +227,11 @@ class Events {
 	/**
 	 * Create or find a term
 	 */
-	public static function createOrFindTerm($term, $name, $slug = null): int {
+	public static function createOrFindTerm(
+		string $term,
+		string $name,
+		string $slug = null
+	): int {
 		$existing_term = term_exists($name, $term);
 
 		if ($existing_term) {
@@ -245,9 +249,9 @@ class Events {
 	 * Download the featured image and set it as featured image on the new post
 	 */
 	public static function setFeaturedImage(
-		$post_id,
-		$featured_image_url,
-		$description = null
+		int $post_id,
+		string $featured_image_url,
+		string $description = null
 	): void {
 		// TODO - error handling, can result in timeout errors
 		$featured_image_attachment = media_sideload_image(
@@ -291,7 +295,7 @@ WHERE meta_key = %s
 	/**
 	 * Sync a single post
 	 */
-	public static function syncPost($post_id): void {
+	public static function syncPost(int $post_id): void {
 		$posts = Posts::requestPost($post_id);
 
 		if (empty($posts)) {

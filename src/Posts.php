@@ -13,7 +13,7 @@ class Posts {
 	/**
 	 * Helper function that returns a set of posts
 	 */
-	public static function requestPosts($page): bool|array {
+	public static function requestPosts(int $page): bool|array {
 		$base_url = SyncPosts::getSiteUrl();
 
 		$post_type = apply_filters(
@@ -63,7 +63,7 @@ class Posts {
 	/**
 	 * Helper function that returns a single post
 	 */
-	public static function requestPost($post_id) {
+	public static function requestPost(int $post_id) {
 		$original_post_id = get_post_meta(
 			$post_id,
 			'sync_posts_original_id',
@@ -101,6 +101,6 @@ class Posts {
 			return;
 		}
 
-		return $posts = json_decode($response->getBody(), true);
+		return json_decode($response->getBody(), true);
 	}
 }

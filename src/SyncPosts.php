@@ -142,7 +142,7 @@ class SyncPosts {
 	/**
 	 * Create the metabox content
 	 */
-	public function create_post_metabox($post) {
+	public function create_post_metabox(\WP_Post $post) {
 		$post_id = $post->ID;
 
 		$user_timezone = wp_timezone_string();
@@ -232,56 +232,59 @@ class SyncPosts {
 	/**
 	 * Filter for how often the sync should run
 	 */
-	public function filter_sync_schedule($schedule): string {
+	public function filter_sync_schedule(string $schedule): string {
 		return $schedule;
 	}
 
 	/**
 	 * Filter for the base site url
 	 */
-	public function filter_site_url($url): string {
+	public function filter_site_url(string $url): string {
 		return $url;
 	}
 
 	/**
 	 * Posts per page when hitting the REST API
 	 */
-	public function filter_posts_per_page($posts): int {
+	public function filter_posts_per_page(int $posts): int {
 		return $posts;
 	}
 
 	/**
 	 * Posts per page when hitting the REST API
 	 */
-	public function filters_author_id($id): int {
+	public function filters_author_id(int $id): int {
 		return $id;
 	}
 
 	/**
 	 * The post type used for adding the metabox
 	 */
-	public function filters_post_type_single($post_type): string {
+	public function filters_post_type_single(string $post_type): string {
 		return $post_type;
 	}
 
 	/**
 	 * The post type used when hitting the REST API
 	 */
-	public function filters_post_type_plural($post_type): string {
+	public function filters_post_type_plural(string $post_type): string {
 		return $post_type;
 	}
 
 	/**
 	 * The post type used when hitting the REST API
 	 */
-	public function filters_log_errors($answer): bool {
+	public function filters_log_errors(bool $answer): bool {
 		return $answer;
 	}
 
 	/**
 	 * Return a post transient name with the option to create it
 	 */
-	public static function postTransient($post, $create = false): string {
+	public static function postTransient(
+		array $post,
+		bool $create = false
+	): string {
 		$post_id = self::mutatePostId($post['id']);
 
 		$name = 'sync_posts_temp_' . $post_id;
@@ -312,7 +315,7 @@ class SyncPosts {
 	/**
 	 * Append site url to post id
 	 */
-	public static function mutatePostId($id): string {
+	public static function mutatePostId(int $id): string {
 		//site url with id append
 
 		$base_url = apply_filters(
@@ -334,7 +337,7 @@ class SyncPosts {
 	/**
 	 * Transform mutated post id back to just an id
 	 */
-	public static function stripPostId($id): string {
+	public static function stripPostId(string $id): string {
 		$id_parts = explode('_', $id);
 
 		return end($id_parts);
@@ -343,7 +346,7 @@ class SyncPosts {
 	/**
 	 * Write to local log
 	 */
-	public static function logError($error_message): void {
+	public static function logError(string $error_message): void {
 		$log_errors = apply_filters(
 			'sync_posts_log_errors',
 			self::DEFAULT_LOG_ERRORS,
