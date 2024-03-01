@@ -211,19 +211,7 @@ class DuplicatePosts {
 
 		$posts = $response['posts'];
 
-		foreach ($posts as $post) {
-			// Post data is too large to pass to action, so we will store it temporarliy to pass and then delete
-			$transient = $this->setPostTransient($post);
-
-			as_schedule_single_action(
-				time(),
-				'duplicate_posts_create_post',
-				[
-					'transient' => $transient,
-				],
-				'duplicate_posts',
-			);
-		}
+		$this->schedulePostLoop($posts);
 	}
 
 	/**
@@ -239,8 +227,29 @@ class DuplicatePosts {
 		$page_count = $response['page_count'];
 		$posts = $response['posts'];
 
-		// Create the posts for the first page pulled
-		// TODO - refactor
+		$this->schedulePostLoop($posts);
+
+		// Schedule the additional requests
+		for ($i = 2; $i < $page_count + 1; $i++) {
+			as_schedule_single_action(
+				time(),
+				'duplicate_posts_fetch_posts',
+				[
+					'page' => $i,
+				],
+				'duplicate_posts_fetch',
+			);
+		}
+	}
+
+	/**
+	 * Loop thru the posts array and schedule the post creation
+	 */
+	public function schedulePostLoop($posts): void {
+		if (empty($posts)) {
+			return;
+		}
+
 		foreach ($posts as $post) {
 			// Post data is too large to pass to action, so we will store it temporarliy to pass and then delete
 			$transient = $this->setPostTransient($post);
@@ -252,18 +261,6 @@ class DuplicatePosts {
 					'transient' => $transient,
 				],
 				'duplicate_posts_create',
-			);
-		}
-
-		// Schedule the additional requests
-		for ($i = 2; $i < $page_count + 1; $i++) {
-			as_schedule_single_action(
-				time(),
-				'duplicate_posts_fetch_posts',
-				[
-					'page' => $i,
-				],
-				'duplicate_posts_fetch',
 			);
 		}
 	}
@@ -444,7 +441,7 @@ WHERE meta_key = %s
 	/**
 	 * Get the site url for the API
 	 */
-	public function getSiteUrl() {
+	public function getSiteUrl(): string {
 		$base_url = apply_filters(
 			'duplicate_posts_site_url',
 			'https://tjwrestling.com',
