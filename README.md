@@ -10,6 +10,24 @@ There is an action, `sync_posts_sync`, that will query a WordPress site, `sync_p
 
 Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that will actually create or update the post locally. This is also in a job to prevent any server stress when creating too many posts at once.
 
+## Installation
+
+Drop the plugin folder in your WordPress plugins folder and run `composer install` inside the plugin folder to install the required libraries.
+
+To customize the plugin, please make use of the filters.
+
+Ex.
+
+```
+add_filter('sync_posts_site_url', function () {
+	return 'https://yokoco.com/';
+});
+```
+
+The daily sync event will automatically be created when the plugin is loaded.
+
+If you do not want to wait, you can use the ActionScheduler plugin to manually run this event or run `do_action('sync_posts_sync')` to start a sync.
+
 ## Dev Guide
 
 Errors are logged to error.log inside the plugin folder
@@ -59,14 +77,15 @@ May or may not get to these todo items, more so if I have time and noticed I sho
 - [x] Meta box in post editor showing that the post has been copied
 - [x] Handle featured image
 - [x] Handle taxonomy and categories
-- [ ] Handle taxonomy and category parents
+- [ ] Handle taxonomy and category parents (not looking at parents, will need to do some sorta recursive behavior)
 - [x] Better error handling and logging
 - [x] Refactor REST related code into an API class
 - [x] Refactor events related code into an Events class
 - [x] Add filters to support multiple post types
-- [ ] Implement coding standards
+- [ ] Implement coding standards (had issues with the WordPress standards not ignoring the filename rule)
 - [x] Add timestamp when sync for post is completed
 - [x] Add functionality to sync an individual posts
 - [x] Rename the plugin for production use
 - [ ] Branding
-- [ ] Space the jobs out
+- [ ] Space the jobs out (currently all the jobs just sorta fire)
+- [ ] Remove related events when plugin is uninstalled
