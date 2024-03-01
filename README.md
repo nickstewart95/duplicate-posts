@@ -36,6 +36,16 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 
 `duplicate_posts_sync_single_post` - Syncs a single post
 
+### Meta Data
+
+`duplicate_posts_original_id` - The post ID from the source site
+
+`duplicate_posts_original_modification_date` - The last modified date from the source site
+
+`duplicate_posts_original_url` - The post URL from the source site
+
+`duplicate_posts_last_synced_date_gtm` -The last time the post was synced over
+
 ## Todo
 
 - [x] Meta box in post editor showing that the post has been copied
