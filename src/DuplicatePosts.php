@@ -38,7 +38,14 @@ class DuplicatePosts {
 		add_action('duplicate_posts_sync', [$this, 'sync'], 10, 0);
 		add_action('duplicate_posts_fetch_posts', [$this, 'fetchPosts'], 10, 1);
 		add_action('duplicate_posts_create_post', [$this, 'createPost'], 10, 1);
+		add_action(
+			'duplicate_posts_sync_single_post',
+			[$this, 'syncPost'],
+			10,
+			1,
+		);
 		add_action('admin_menu', [$this, 'add_metabox_to_posts']);
+		add_action('wp_loaded', [$this, 'check_for_manual_sync']);
 	}
 
 	/**
@@ -135,7 +142,7 @@ class DuplicatePosts {
 	 * Call the metabox creation
 	 */
 	public function add_metabox_to_posts(): void {
-		$post_type = apply_filters('duplicate_posts_post_type', 'posts');
+		$post_type = apply_filters('duplicate_posts_post_type', 'post');
 
 		add_meta_box(
 			'duplicate_posts_post_information',
@@ -154,6 +161,7 @@ class DuplicatePosts {
 		$post_id = $post->ID;
 
 		$user_timezone = wp_timezone_string();
+
 		$modification_date = get_post_meta(
 			$post_id,
 			'duplicate_posts_original_modification_date',
@@ -163,9 +171,77 @@ class DuplicatePosts {
 			->setTimezone($user_timezone)
 			->format('M d, Y');
 
+		$last_synced_date = get_post_meta(
+			$post_id,
+			'duplicate_posts_last_synced_date_gtm',
+			true,
+		);
+
+		$last_synced_date_formatted = Carbon::parse($last_synced_date)
+			->setTimezone($user_timezone)
+			->format('M d, Y g:i a');
+
 		$url = get_post_meta($post_id, 'duplicate_posts_original_url', true);
 
-		echo "<b>URL:</b> <a href='{$url}' target='_blank'>{$url}</a><br /><b>Last modified:</b> {$modification_date_formatted}";
+		$is_syncing = !empty($_GET['duplicate_posts_syncing'])
+			? $_GET['duplicate_posts_syncing']
+			: false;
+
+		// TODO - refactor into a template
+		$html = "<b>URL:</b> <a href='{$url}' target='_blank'>{$url}</a><br /><b>Last modified:</b> {$modification_date_formatted}<br /><b>Last synced:</b> {$last_synced_date_formatted}</p>";
+
+		if ($is_syncing) {
+			$html .= '<p>Syncing...</p>';
+		} else {
+			global $wp;
+			$current_url =
+				'/wp-admin/post.php' . add_query_arg($_GET, $wp->request);
+			$sync_url = $current_url . '&duplicate_posts_syncing=true';
+
+			$html .= "<p><a href='{$sync_url}' class='button button-primary'>Sync</a></p>";
+		}
+
+		echo $html;
+	}
+
+	/**
+	 * Run a manual sync
+	 */
+	public function check_for_manual_sync(): void {
+		$is_syncing = !empty($_GET['duplicate_posts_syncing'])
+			? $_GET['duplicate_posts_syncing']
+			: false;
+
+		if (!$is_syncing) {
+			return;
+		}
+
+		$post_id = $_GET['post'];
+
+		// Check to make sure its not already scheduled
+		$scheduled_job = as_get_scheduled_actions(
+			[
+				'hook' => 'duplicate_posts_sync_single_post',
+				'status' => 'pending',
+				'args' => [
+					'post_id' => (string) $post_id,
+				],
+			],
+			'ARRAY_A',
+		);
+
+		if (!empty($scheduled_job)) {
+			return;
+		}
+
+		as_schedule_single_action(
+			time(),
+			'duplicate_posts_sync_single_post',
+			[
+				'post_id' => $post_id,
+			],
+			'duplicate_posts_sync_post',
+		);
 	}
 
 	/**
@@ -209,6 +285,7 @@ class DuplicatePosts {
 	public function requestPosts($page): bool|array {
 		$base_url = $this->getSiteUrl();
 
+		// TODO - fix plural case
 		$post_type = apply_filters('duplicate_posts_post_type', 'posts');
 
 		$posts_per_page = apply_filters('duplicate_posts_post_per_page', 10);
@@ -338,6 +415,7 @@ class DuplicatePosts {
 		$meta['duplicate_posts_original_modification_date'] =
 			$post['modified_gmt'];
 		$meta['duplicate_posts_original_url'] = $post['link'];
+		$meta['duplicate_posts_last_synced_date_gtm'] = Carbon::now('UTC');
 
 		// Setup the terms
 		$terms_parent = $post['_embedded']['wp:term'];
@@ -407,6 +485,47 @@ class DuplicatePosts {
 	}
 
 	/**
+	 * Sync a single post
+	 */
+	public function syncPost($post_id): void {
+		$original_post_id = get_post_meta(
+			$post_id,
+			'duplicate_posts_original_id',
+			true,
+		);
+
+		$base_url = $this->getSiteUrl();
+
+		// TODO - fix plural case
+		$post_type = apply_filters('duplicate_posts_post_type', 'posts');
+
+		$client = new Client([
+			'base_uri' => $base_url,
+		]);
+
+		try {
+			$response = $client->request('GET', $post_type, [
+				'query' => [
+					'_embed' => 1,
+					'include' => $original_post_id,
+				],
+			]);
+
+			if ($response->getStatusCode() !== 200) {
+				return;
+			}
+		} catch (\Exception $e) {
+			return;
+		}
+
+		$posts = json_decode($response->getBody(), true);
+
+		$this->schedulePostLoop($posts);
+
+		return;
+	}
+
+	/**
 	 * Download the featured image and set it as featured image on the new post
 	 */
 	public function setFeaturedImage(
@@ -414,6 +533,7 @@ class DuplicatePosts {
 		$featured_image_url,
 		$description = null
 	): void {
+		// TODO - error handling, can result in timeout errors
 		$featured_image_attachment = media_sideload_image(
 			$featured_image_url,
 			$post_id,

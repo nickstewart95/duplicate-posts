@@ -1,6 +1,8 @@
 # Duplicate Posts
 
-A simple WordPress plugin that can duplicate posts from one WordPress site to another using the REST API
+A simple WordPress plugin that can duplicate posts from one WordPress site to another using the REST API.
+
+While this plugin works, it was more so a project than an production plugin, hence the name conflict with other similar plugins.
 
 ## How it works
 
@@ -28,9 +30,11 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 
 ### Scheduled Events
 
-`fetch_posts` - Fetches posts per page and then creates events for each
+`duplicate_posts_fetch_posts` - Fetches posts per page and then creates events for each
 
-`create_post` - Creates/updates individual posts
+`duplicate_posts_create_post` - Creates/updates individual posts
+
+`duplicate_posts_sync_single_post` - Syncs a single post
 
 ## Todo
 
@@ -43,4 +47,6 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 - [ ] Refactor events related code into an Events class
 - [x] Add filters to support multiple post types
 - [ ] Implement coding standards
-- [ ] Add timestamp when sync is completed
+- [x] Add timestamp when sync for post is completed
+- [x] Add functionality to sync an individual posts
+- [ ] Rename the plugin for production use
