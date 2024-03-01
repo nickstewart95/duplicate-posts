@@ -34,19 +34,19 @@ Errors are logged to error.log inside the plugin folder
 
 ### Filters
 
-`sync_posts_sync_schedule` - The cron schedule for how often the sync runs
+`sync_posts_sync_schedule` - The cron schedule for how often the sync runs, default value is `0 4,14 * * *`;
 
-`sync_posts_site_url` - The url of the WordPress site posts are being syncd from
+`sync_posts_site_url` - The url of the WordPress site posts are being syncd from, default value is `https://tjwrestling.com'`
 
-`sync_posts_post_per_page` - The number of posts being grabbed at a time
+`sync_posts_post_per_page` - The number of posts being grabbed at a time, default value is `10`
 
-`sync_posts_author_id` - The author ID copied posts are associated with
+`sync_posts_author_id` - The author ID copied posts are associated with, default value is `1`
 
-`sync_posts_post_type_single` - The post type being retrieved, singular form
+`sync_posts_post_type_single` - The post type being retrieved, singular form, default value is `post`
 
-`sync_posts_post_type_plural` - The post type being retrieved, plural form
+`sync_posts_post_type_plural` - The post type being retrieved, plural form, default value is `posts`
 
-`sync_posts_log_errors` - If errors should be logged
+`sync_posts_log_errors` - If errors should be logged, default value is `true`
 
 ### Actions
 
