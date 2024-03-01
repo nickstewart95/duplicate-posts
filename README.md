@@ -13,8 +13,11 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 ### Filters
 
 `duplicate_posts_sync_schedule` - The cron schedule for how often the sync runs
+
 `duplicate_posts_site_url` - The url of the WordPress site posts are being duplicated from
+
 `duplicate_posts_post_per_page` - The number of posts being grabbed at a time
+
 `duplicate_posts_author_id` - The author ID copied posts are associated with
 
 ### Actions
