@@ -15,8 +15,8 @@ class DuplicatePosts {
 	public string $default_site_url = 'https://tjwrestling.com';
 	public int $default_posts_per_page = 10;
 	public int $default_posts_author_id = 1;
-	public string $default_posts_post_type_single = 'post';
-	public string $default_posts_post_type_plural = 'posts';
+	public string $default_post_type_single = 'post';
+	public string $default_post_type_plural = 'posts';
 
 	/**
 	 * Class instance
@@ -158,7 +158,7 @@ class DuplicatePosts {
 	public function add_metabox_to_posts(): void {
 		$post_type = apply_filters(
 			'duplicate_posts_post_type_single',
-			$this->default_posts_post_type_single,
+			$this->default_post_type_single,
 		);
 
 		add_meta_box(
@@ -311,7 +311,7 @@ class DuplicatePosts {
 
 		$post_type = apply_filters(
 			'duplicate_posts_post_type_plural',
-			$this->default_posts_post_type_plural,
+			$this->default_post_type_plural,
 		);
 
 		$posts_per_page = apply_filters(
@@ -401,7 +401,7 @@ class DuplicatePosts {
 
 		foreach ($posts as $post) {
 			// Post data is too large to pass to action, so we will store it temporarliy to pass and then delete
-			$transient = $this->setPostTransient($post);
+			$transient = $this->postTransient($post, true);
 
 			as_schedule_single_action(
 				time(),
@@ -496,7 +496,7 @@ class DuplicatePosts {
 		// Check to see if post has been created
 		$existing_posts = $this->findExistingPosts();
 		$local_post = !empty($existing_posts[$mutated_id])
-			? $existing_posts[$post['id']]
+			? $existing_posts[$mutated_id]
 			: false;
 
 		// Update or create
@@ -522,19 +522,19 @@ class DuplicatePosts {
 	 * Sync a single post
 	 */
 	public function syncPost($post_id): void {
-		$mutated_id = $this->mutatePostId($post_id);
-
 		$original_post_id = get_post_meta(
-			$mutated_id,
+			$post_id,
 			'duplicate_posts_original_id',
 			true,
 		);
+
+		$original_post_id_stripped = $this->stripPostId($original_post_id);
 
 		$base_url = $this->getSiteUrl();
 
 		$post_type = apply_filters(
 			'duplicate_posts_post_type_plural',
-			$this->default_posts_post_type_plural,
+			$this->default_post_type_plural,
 		);
 
 		$client = new Client([
@@ -545,7 +545,7 @@ class DuplicatePosts {
 			$response = $client->request('GET', $post_type, [
 				'query' => [
 					'_embed' => 1,
-					'include' => $original_post_id,
+					'include' => $original_post_id_stripped,
 				],
 			]);
 
@@ -600,13 +600,18 @@ class DuplicatePosts {
 	}
 
 	/**
-	 * Set a transient with the post data
+	 * Return a post transient name with the option to create it
 	 */
-	public function setPostTransient($post): string {
-		$name = 'duplicate_posts_temp_' . $post['id'];
-		$post = json_encode($post);
+	public function postTransient($post, $create = false): string {
+		$post_id = $this->mutatePostId($post['id']);
 
-		set_transient($name, $post, DAY_IN_SECONDS);
+		$name = 'duplicate_posts_temp_' . $post_id;
+
+		if ($create) {
+			$post = json_encode($post);
+
+			set_transient($name, $post, DAY_IN_SECONDS);
+		}
 
 		return $name;
 	}
@@ -672,6 +677,15 @@ WHERE meta_key = %s
 
 		$host_top_level = end($host_url_parts);
 
-		return $host_url_parts . '_' . $id;
+		return $host_top_level . '_' . $id;
+	}
+
+	/**
+	 * Transform mutated post id back to just an id
+	 */
+	public function stripPostId($id): string {
+		$id_parts = explode('_', $id);
+
+		return end($id_parts);
 	}
 }
