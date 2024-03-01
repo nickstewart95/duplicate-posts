@@ -164,11 +164,7 @@ class DuplicatePosts {
 	 * Helper function that returns a set of posts
 	 */
 	public function requestPosts($page): bool|array {
-		$base_url = apply_filters(
-			'duplicate_posts_site_url',
-			'https://tjwrestling.com',
-		);
-		$base_url = $base_url . '/wp-json/wp/v2/'; // TODO - check for trailing slash
+		$base_url = $this->getSiteUrl();
 
 		$post_type = apply_filters('duplicate_posts_post_type', 'posts');
 
@@ -443,5 +439,19 @@ WHERE meta_key = %s
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Get the site url for the API
+	 */
+	public function getSiteUrl() {
+		$base_url = apply_filters(
+			'duplicate_posts_site_url',
+			'https://tjwrestling.com',
+		);
+
+		$base_url = rtrim($base_url, '/');
+
+		return $base_url . '/wp-json/wp/v2/';
 	}
 }
