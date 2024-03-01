@@ -28,6 +28,7 @@ class DuplicatePosts {
 	public function setup(): void {
 		add_action('init', [$this, 'initActions']);
 		add_action('init', [$this, 'initFilters']);
+		add_action('action_scheduler_init', [$this, 'scheduleSync']);
 	}
 
 	/**
@@ -86,6 +87,48 @@ class DuplicatePosts {
 	public function sync(): void {
 		$api = new DuplicatePosts();
 		$api->schedulePosts();
+	}
+
+	/**
+	 * Schedule the main sync to run on a cron like schedule
+	 */
+	public function scheduleSync(): void {
+		$scheduled_job = as_get_scheduled_actions(
+			[
+				'hook' => 'duplicate_posts_sync_schedule',
+				'group' => 'duplicate_posts_daily_sync',
+			],
+			'ARRAY_A',
+		);
+
+		$schedule = apply_filters(
+			'duplicate_posts_sync_schedule',
+			'0 4,14 * * *',
+		);
+
+		// Check if the schedule has changed, if so update it
+		if (!empty($scheduled_job)) {
+			if ($scheduled_job['schedule'] != $schedule) {
+				as_unschedule_all_actions(
+					'duplicate_posts_sync_schedule',
+					[],
+					'duplicate_posts_daily_sync',
+				);
+			} else {
+				return;
+			}
+		}
+
+		// Schedule the sync
+		as_schedule_cron_action(
+			time(),
+			$schedule,
+			'duplicate_posts_sync',
+			[],
+			'duplicate_posts_daily_sync',
+			true,
+			10,
+		);
 	}
 
 	/**
