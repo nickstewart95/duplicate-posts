@@ -11,12 +11,13 @@ use GuzzleHttp\Client;
 class DuplicatePosts {
 	private static $instance = null;
 
-	public string $default_sync_schedule = '';
+	public string $default_sync_schedule = '0 4,14 * * *';
 	public string $default_site_url = 'https://tjwrestling.com';
 	public int $default_posts_per_page = 10;
 	public int $default_posts_author_id = 1;
 	public string $default_post_type_single = 'post';
 	public string $default_post_type_plural = 'posts';
+	public bool $default_log_errors = true;
 
 	/**
 	 * Class instance
@@ -100,6 +101,13 @@ class DuplicatePosts {
 			10,
 			1,
 		);
+
+		add_filter(
+			'duplicate_posts_log_errors',
+			[$this, 'filters_log_errors'],
+			10,
+			1,
+		);
 	}
 
 	/**
@@ -124,7 +132,7 @@ class DuplicatePosts {
 
 		$schedule = apply_filters(
 			'duplicate_posts_sync_schedule',
-			'0 4,14 * * *',
+			$this->default_sync_schedule,
 		);
 
 		// Check if the schedule has changed, if so update it
@@ -304,6 +312,13 @@ class DuplicatePosts {
 	}
 
 	/**
+	 * The post type used when hitting the REST API
+	 */
+	public function filters_log_errors($answer): bool {
+		return $answer;
+	}
+
+	/**
 	 * Helper function that returns a set of posts
 	 */
 	public function requestPosts($page): bool|array {
@@ -333,9 +348,14 @@ class DuplicatePosts {
 			]);
 
 			if ($response->getStatusCode() !== 200) {
+				$error_message =
+					'Error fetching posts: ' . $response->getStatusCode();
+				$this->logError($error_message);
+
 				return false;
 			}
 		} catch (\Exception $e) {
+			$this->logError($e->getMessage());
 			return false;
 		}
 
@@ -421,6 +441,8 @@ class DuplicatePosts {
 		$post_transient = get_transient($transient);
 
 		if (empty($post_transient)) {
+			$this->logError('Could not fetch post transient');
+
 			return;
 		}
 
@@ -550,9 +572,12 @@ class DuplicatePosts {
 			]);
 
 			if ($response->getStatusCode() !== 200) {
-				return;
+				$error_message =
+					'Error fetching single post: ' . $response->getStatusCode();
+				$this->logError($error_message);
 			}
 		} catch (\Exception $e) {
+			$this->logError($e->getMessage());
 			return;
 		}
 
@@ -687,5 +712,25 @@ WHERE meta_key = %s
 		$id_parts = explode('_', $id);
 
 		return end($id_parts);
+	}
+
+	/**
+	 * Write to local log
+	 */
+	public function logError($error_message): void {
+		$log_errors = apply_filters(
+			'duplicate_posts_log_errors',
+			$this->default_log_errors,
+		);
+
+		if (!$log_errors) {
+			return;
+		}
+
+		$log_file = plugin_dir_path(__FILE__) . 'error.log';
+
+		$error_message = $error_message . PHP_EOL;
+
+		error_log($error_message, 3, $log_file);
 	}
 }

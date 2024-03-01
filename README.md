@@ -26,6 +26,8 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 
 `duplicate_posts_post_type_plural` - The post type being retrieved, plural form
 
+`duplicate_posts_log_errors` - If errors should be logged
+
 ### Actions
 
 `duplicate_posts_sync` - Starts the sync
@@ -56,7 +58,7 @@ May or may not get to these todo items, more so if I have time and noticed I sho
 - [x] Handle featured image
 - [x] Handle taxonomy and categories
 - [ ] Handle taxonomy and category parents
-- [ ] Better error handling and logging
+- [x] Better error handling and logging
 - [ ] Refactor REST related code into an API class
 - [ ] Refactor events related code into an Events class
 - [x] Add filters to support multiple post types
