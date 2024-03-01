@@ -1,14 +1,14 @@
 <?php
 
-namespace Nickstewart\DuplicatePosts;
+namespace Nickstewart\SyncPosts;
 
-define('DUPLICATE_POSTS_VERSION', '1.0.0');
-define('DUPLICATE_POSTS_FILE', __FILE__);
+define('sync_POSTS_VERSION', '1.0.0');
+define('sync_POSTS_FILE', __FILE__);
 
 use Carbon\Carbon;
 
-use Nickstewart\DuplicatePosts\DuplicatePosts;
-use Nickstewart\DuplicatePosts\Posts;
+use Nickstewart\SyncPosts\SyncPosts;
+use Nickstewart\SyncPosts\Posts;
 
 class Events {
 	/**
@@ -45,11 +45,11 @@ class Events {
 		for ($i = 2; $i < $page_count + 1; $i++) {
 			as_schedule_single_action(
 				time(),
-				'duplicate_posts_fetch_posts',
+				'sync_posts_fetch_posts',
 				[
 					'page' => $i,
 				],
-				'duplicate_posts_fetch',
+				'sync_posts_fetch',
 			);
 		}
 	}
@@ -60,24 +60,24 @@ class Events {
 	public static function scheduleSync(): void {
 		$scheduled_job = as_get_scheduled_actions(
 			[
-				'hook' => 'duplicate_posts_sync_schedule',
-				'group' => 'duplicate_posts_daily_sync',
+				'hook' => 'sync_posts_sync_schedule',
+				'group' => 'sync_posts_daily_sync',
 			],
 			'ARRAY_A',
 		);
 
 		$schedule = apply_filters(
-			'duplicate_posts_sync_schedule',
-			DuplicatePosts::DEFAULT_SYNC_SCHEDULE,
+			'sync_posts_sync_schedule',
+			SyncPosts::DEFAULT_SYNC_SCHEDULE,
 		);
 
 		// Check if the schedule has changed, if so update it
 		if (!empty($scheduled_job)) {
 			if ($scheduled_job['schedule'] != $schedule) {
 				as_unschedule_all_actions(
-					'duplicate_posts_sync_schedule',
+					'sync_posts_sync_schedule',
 					[],
-					'duplicate_posts_daily_sync',
+					'sync_posts_daily_sync',
 				);
 			} else {
 				return;
@@ -88,9 +88,9 @@ class Events {
 		as_schedule_cron_action(
 			time(),
 			$schedule,
-			'duplicate_posts_sync',
+			'sync_posts_sync',
 			[],
-			'duplicate_posts_daily_sync',
+			'sync_posts_daily_sync',
 			true,
 			10,
 		);
@@ -106,15 +106,15 @@ class Events {
 
 		foreach ($posts as $post) {
 			// Post data is too large to pass to action, so we will store it temporarliy to pass and then delete
-			$transient = DuplicatePosts::postTransient($post, true);
+			$transient = SyncPosts::postTransient($post, true);
 
 			as_schedule_single_action(
 				time(),
-				'duplicate_posts_create_post',
+				'sync_posts_create_post',
 				[
 					'transient' => $transient,
 				],
-				'duplicate_posts_create',
+				'sync_posts_create',
 			);
 		}
 	}
@@ -126,15 +126,15 @@ class Events {
 		$post_transient = get_transient($transient);
 
 		if (empty($post_transient)) {
-			DuplicatePosts::logError('Could not fetch post transient');
+			SyncPosts::logError('Could not fetch post transient');
 
 			return;
 		}
 
 		$post = json_decode($post_transient, true);
 		$author = apply_filters(
-			'duplicate_posts_author_id',
-			DuplicatePosts::DEFAULT_POSTS_AUTHOR_ID,
+			'sync_posts_author_id',
+			SyncPosts::DEFAULT_POSTS_AUTHOR_ID,
 		);
 
 		$featured_image_url = null;
@@ -149,14 +149,13 @@ class Events {
 		// Meta from the post
 		$meta = $post['meta'];
 
-		$mutated_id = DuplicatePosts::mutatePostId($post['id']);
+		$mutated_id = SyncPosts::mutatePostId($post['id']);
 
 		// Plugin custom meta
-		$meta['duplicate_posts_original_id'] = $mutated_id;
-		$meta['duplicate_posts_original_modification_date'] =
-			$post['modified_gmt'];
-		$meta['duplicate_posts_original_url'] = $post['link'];
-		$meta['duplicate_posts_last_synced_date_gtm'] = Carbon::now('UTC');
+		$meta['sync_posts_original_id'] = $mutated_id;
+		$meta['sync_posts_original_modification_date'] = $post['modified_gmt'];
+		$meta['sync_posts_original_url'] = $post['link'];
+		$meta['sync_posts_last_synced_date_gtm'] = Carbon::now('UTC');
 
 		// Setup the terms
 		$terms_parent = $post['_embedded']['wp:term'];
@@ -274,7 +273,7 @@ SELECT post_id, meta_value
 FROM {$wpdb->prefix}postmeta
 WHERE meta_key = %s
 ",
-				'duplicate_posts_original_id',
+				'sync_posts_original_id',
 			),
 		);
 

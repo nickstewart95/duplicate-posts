@@ -1,30 +1,29 @@
 <?php
 
-namespace Nickstewart\DuplicatePosts;
+namespace Nickstewart\SyncPosts;
 
-define('DUPLICATE_POSTS_VERSION', '1.0.0');
-define('DUPLICATE_POSTS_FILE', __FILE__);
+define('sync_POSTS_VERSION', '1.0.0');
+define('sync_POSTS_FILE', __FILE__);
 
-use Carbon\Carbon;
 use GuzzleHttp\Client;
 
-use Nickstewart\DuplicatePosts\DuplicatePosts;
+use Nickstewart\SyncPosts\SyncPosts;
 
 class Posts {
 	/**
 	 * Helper function that returns a set of posts
 	 */
 	public static function requestPosts($page): bool|array {
-		$base_url = DuplicatePosts::getSiteUrl();
+		$base_url = SyncPosts::getSiteUrl();
 
 		$post_type = apply_filters(
-			'duplicate_posts_post_type_plural',
-			DuplicatePosts::DEFAULT_POST_TYPE_PLURAL,
+			'sync_posts_post_type_plural',
+			SyncPosts::DEFAULT_POST_TYPE_PLURAL,
 		);
 
 		$posts_per_page = apply_filters(
-			'duplicate_posts_post_per_page',
-			DuplicatePosts::DEFAULT_POSTS_PER_PAGE,
+			'sync_posts_post_per_page',
+			SyncPosts::DEFAULT_POSTS_PER_PAGE,
 		);
 
 		$client = new Client([
@@ -43,12 +42,12 @@ class Posts {
 			if ($response->getStatusCode() !== 200) {
 				$error_message =
 					'Error fetching posts: ' . $response->getStatusCode();
-				DuplicatePosts::logError($error_message);
+				SyncPosts::logError($error_message);
 
 				return false;
 			}
 		} catch (\Exception $e) {
-			DuplicatePosts::logError($e->getMessage());
+			SyncPosts::logError($e->getMessage());
 			return false;
 		}
 
@@ -67,19 +66,17 @@ class Posts {
 	public static function requestPost($post_id) {
 		$original_post_id = get_post_meta(
 			$post_id,
-			'duplicate_posts_original_id',
+			'sync_posts_original_id',
 			true,
 		);
 
-		$original_post_id_stripped = DuplicatePosts::stripPostId(
-			$original_post_id,
-		);
+		$original_post_id_stripped = SyncPosts::stripPostId($original_post_id);
 
-		$base_url = DuplicatePosts::getSiteUrl();
+		$base_url = SyncPosts::getSiteUrl();
 
 		$post_type = apply_filters(
-			'duplicate_posts_post_type_plural',
-			DuplicatePosts::DEFAULT_POST_TYPE_PLURAL,
+			'sync_posts_post_type_plural',
+			SyncPosts::DEFAULT_POST_TYPE_PLURAL,
 		);
 
 		$client = new Client([
@@ -97,10 +94,10 @@ class Posts {
 			if ($response->getStatusCode() !== 200) {
 				$error_message =
 					'Error fetching single post: ' . $response->getStatusCode();
-				DuplicatePosts::logError($error_message);
+				SyncPosts::logError($error_message);
 			}
 		} catch (\Exception $e) {
-			DuplicatePosts::logError($e->getMessage());
+			SyncPosts::logError($e->getMessage());
 			return;
 		}
 

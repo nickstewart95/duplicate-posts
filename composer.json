@@ -1,25 +1,25 @@
 {
-    "name": "nickstewart/duplicateposts",
-    "autoload": {
-        "psr-4": {
-            "Nickstewart\\DuplicatePosts\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Nick Stewart",
-            "email": "nick@nickstewart.me"
-        }
-    ],
+	"name": "nickstewart/syncposts",
+	"autoload": {
+		"psr-4": {
+			"Nickstewart\\SyncPosts\\": "src/"
+		}
+	},
+	"authors": [
+		{
+			"name": "Nick Stewart",
+			"email": "nick@nickstewart.me"
+		}
+	],
 	"config": {
-        "platform": {
-            "php": "8.0.0"
-        },    
+		"platform": {
+			"php": "8.0.0"
+		},
 		"vendor-dir": "src/vendor"
 	},
-    "require": {
-        "guzzlehttp/guzzle": "^7.8",
-        "woocommerce/action-scheduler": "^3.7",
-        "nesbot/carbon": "^2.72"
-    }
+	"require": {
+		"guzzlehttp/guzzle": "^7.8",
+		"woocommerce/action-scheduler": "^3.7",
+		"nesbot/carbon": "^2.72"
+	}
 }
