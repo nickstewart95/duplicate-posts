@@ -28,6 +28,8 @@ The daily sync event will automatically be created when the plugin is loaded.
 
 If you do not want to wait, you can use the ActionScheduler plugin to manually run this event or run `do_action('sync_posts_sync')` to start a sync.
 
+Clicking into an individual post (that is a copied post) will display a metabox that will allow you to manually since that one one post.
+
 ## Dev Guide
 
 Errors are logged to error.log inside the plugin folder
