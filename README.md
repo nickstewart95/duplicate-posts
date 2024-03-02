@@ -70,6 +70,10 @@ Errors are logged to error.log inside the plugin folder
 
 `sync_posts_last_synced_date_gtm` -The last time the post was synced over
 
+### Option Data
+
+`sync_posts_registered_taxonomies` - Contains the taxonomy data from copied posts so they can be recreated
+
 ## Todo
 
 May or may not get to these todo items, more so if I have time and noticed I should add something or make it better

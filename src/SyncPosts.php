@@ -37,6 +37,7 @@ class SyncPosts {
 	public function setup(): void {
 		add_action('init', [$this, 'initActions']);
 		add_action('init', [$this, 'initFilters']);
+		add_action('init', [$this, 'initTaxonomy']);
 		add_action('action_scheduler_init', [Events::class, 'scheduleSync']);
 	}
 
@@ -111,6 +112,42 @@ class SyncPosts {
 			10,
 			1,
 		);
+	}
+
+	/**
+	 * Setup custom taxonomy saved in option
+	 */
+	public function initTaxonomy(): void {
+		$registered_taxonomies = get_option(
+			'sync_posts_registered_taxonomies',
+			[],
+		);
+
+		if (empty($registered_taxonomies)) {
+			return;
+		}
+
+		foreach ($registered_taxonomies as $taxonomy) {
+			$pretty_name = str_replace('-', ' ', $taxonomy['name']);
+			$pretty_name = ucwords($pretty_name);
+
+			$args = [
+				'hierarchical' => true,
+				'show_ui' => true,
+				'show_admin_column' => true,
+				'has_archive' => true,
+				'labels' => [
+					'name' => $pretty_name,
+					'singular_name' => $pretty_name,
+				],
+			];
+
+			register_taxonomy(
+				$taxonomy['name'],
+				[$taxonomy['post_type_single']],
+				$args,
+			);
+		}
 	}
 
 	/**

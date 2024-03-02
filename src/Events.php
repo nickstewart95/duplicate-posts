@@ -158,6 +158,7 @@ class Events {
 		$terms_parent = $post['_embedded']['wp:term'];
 		$category_ids = [];
 		$tag_ids = [];
+		$taxonomy_ids = [];
 
 		foreach ($terms_parent as $terms) {
 			foreach ($terms as $term) {
@@ -177,6 +178,18 @@ class Events {
 						$term['name'],
 						$term['slug'],
 					);
+				} else {
+					// Create or find taxonomy
+					$taxonomy = self::createOrFindTaxonomy($term['taxonomy']);
+
+					// Insert taxonomy terms
+					$term_taxonomy_id = self::createOrFindTerm(
+						$taxonomy,
+						$term['name'],
+						$term['slug'],
+					);
+
+					$taxonomy_ids[$taxonomy] = [$term_taxonomy_id];
 				}
 			}
 		}
@@ -192,6 +205,7 @@ class Events {
 			'post_type' => $post['type'],
 			'post_category' => $category_ids,
 			'tags_input' => $tag_ids,
+			'tax_input' => $taxonomy_ids,
 		];
 
 		delete_transient($transient);
@@ -220,6 +234,53 @@ class Events {
 	}
 
 	/**
+	 * Create or find a taxonomy
+	 */
+	public static function createOrFindTaxonomy(string $name): string {
+		if (taxonomy_exists($name)) {
+			return $name;
+		}
+
+		$post_type_single = apply_filters(
+			'sync_posts_post_type_single',
+			SyncPosts::DEFAULT_POST_TYPE_SINGLE,
+		);
+
+		$post_type_plural = apply_filters(
+			'sync_posts_post_type_plural',
+			SyncPosts::DEFAULT_POST_TYPE_PLURAL,
+		);
+
+		// Create taxonomy
+		$args = [
+			'name' => $name,
+			'post_type_single' => $post_type_single,
+			'post_type_plural' => $post_type_plural,
+		];
+
+		register_taxonomy(
+			$args['name'],
+			$args['post_type_plural'],
+			$args['args'],
+		);
+
+		// Store in the database so it stays registered
+		$registered_taxonomies = get_option(
+			'sync_posts_registered_taxonomies',
+			[],
+		);
+
+		$registered_taxonomies[] = $args;
+
+		update_option(
+			'sync_posts_registered_taxonomies',
+			$registered_taxonomies,
+		);
+
+		return $name;
+	}
+
+	/**
 	 * Create or find a term
 	 */
 	public static function createOrFindTerm(
@@ -230,14 +291,14 @@ class Events {
 		$existing_term = term_exists($name, $term);
 
 		if ($existing_term) {
-			return $existing_term['term_id'];
+			return (int) $existing_term['term_taxonomy_id'];
 		}
 
 		$term = wp_insert_term($name, $term, [
 			'slug' => $slug,
 		]);
 
-		return $term['term_id'];
+		return (int) $term['term_taxonomy_id'];
 	}
 
 	/**
