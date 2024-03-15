@@ -38,6 +38,7 @@ class SyncPosts {
 	public function setup(): void {
 		add_action('init', [$this, 'initActions']);
 		add_action('init', [$this, 'initFilters']);
+		add_action('admin_init', [$this, 'initSettings']);
 		add_action('init', [$this, 'initTaxonomy']);
 		add_action('action_scheduler_init', [Events::class, 'scheduleSync']);
 	}
@@ -114,6 +115,92 @@ class SyncPosts {
 			10,
 			1,
 		);
+	}
+
+	/**
+	 * Setup the plugin settings
+	 */
+	public function initSettings(): void {
+		// Register the settings section
+		add_settings_section(
+			'sync_posts_wordpress_settings',
+			'Sync Posts for WordPress Settings',
+			[$this, 'create_settings_section'],
+			'sync-posts-wordpress',
+		);
+
+		$fields = [
+			[
+				'name' => 'sync_posts_site_url',
+				'title' => 'Site URL',
+				'description' => 'The WordPress Site URL to copy posts from',
+				'value' => get_option(
+					'sync_posts_site_url',
+					self::DEFAULT_SITE_URL,
+				),
+			],
+			[
+				'name' => 'sync_posts_post_per_page',
+				'title' => 'Posts Per Page',
+				'description' => 'How many posts are grabbed at once',
+				'value' => get_option(
+					'sync_posts_post_per_page',
+					self::DEFAULT_POSTS_PER_PAGE,
+				),
+			],
+			[
+				'name' => 'sync_posts_author_id',
+				'title' => 'Author ID',
+				'description' => 'The author to associate the synced posts to',
+				'value' => get_option(
+					'sync_posts_author_id',
+					self::DEFAULT_POSTS_AUTHOR_ID,
+				),
+			],
+			[
+				'name' => 'sync_posts_post_type_single',
+				'title' => 'Post Type, single',
+				'description' => 'The post type being synced, singular name',
+				'value' => get_option(
+					'sync_posts_post_type_single',
+					self::DEFAULT_POST_TYPE_SINGLE,
+				),
+			],
+			[
+				'name' => 'sync_posts_post_type_plural',
+				'title' => 'Post Type, plural',
+				'description' => 'The post type being synced, plural name',
+				'value' => get_option(
+					'sync_posts_post_type_plural',
+					self::DEFAULT_POST_TYPE_PLURAL,
+				),
+			],
+			[
+				'name' => 'sync_posts_log_errors',
+				'title' => 'Log plugin errors',
+				'description' => 'Log plugin errors to a local file',
+				'value' => get_option(
+					'sync_posts_log_errors',
+					self::DEFAULT_LOG_ERRORS,
+				),
+			],
+		];
+
+		foreach ($fields as $field) {
+			register_setting('sync_posts_wordpress', $field['name'], [
+				'type' => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			]);
+
+			add_settings_field(
+				$field['name'],
+				$field['title'],
+				[$this, 'render_settings_field'],
+				'sync-posts-wordpress',
+				'sync_posts_wordpress_settings',
+				$field,
+			);
+		}
 	}
 
 	/**
@@ -199,7 +286,7 @@ class SyncPosts {
 			'Sync Posts Settings',
 			'activate_plugins',
 			'sync-posts-wordpress',
-			[$this, 'create_settings_page']
+			[$this, 'create_settings_page'],
 		);
 	}
 
@@ -210,7 +297,25 @@ class SyncPosts {
 		$blade = $GLOBALS['blade'];
 
 		echo $blade->render('admin.settings', [
-			'plugin_version' => SNYC_POSTS_VERSION
+			'plugin_version' => SNYC_POSTS_VERSION,
+		]);
+	}
+
+	/**
+	 * Create the settings section
+	 */
+	public function create_settings_section($args): void {
+		echo '<p>These will override the default settings but will not override any applied filters.</p>';
+	}
+
+	/**
+	 * Render settings output
+	 */
+	public function render_settings_field($args): void {
+		$blade = $GLOBALS['blade'];
+
+		echo $blade->render('admin.partials.text-input', [
+			'args' => $args,
 		]);
 	}
 
