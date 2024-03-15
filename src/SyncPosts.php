@@ -68,6 +68,7 @@ class SyncPosts {
 		);
 
 		add_action('admin_menu', [$this, 'add_metabox_to_posts']);
+		add_action('admin_menu', [$this, 'add_settings_page']);
 		add_action('wp_loaded', [$this, 'check_for_manual_sync']);
 	}
 
@@ -186,6 +187,31 @@ class SyncPosts {
 			'side',
 			'high',
 		);
+	}
+
+	/**
+	 * Add the plugin settings page
+	 */
+	public function add_settings_page(): void {
+		// TODO - add filter for who can view the plugin settings
+		add_options_page(
+			'Sync Posts for Wordpress',
+			'Sync Posts Settings',
+			'activate_plugins',
+			'sync-posts-wordpress',
+			[$this, 'create_settings_page']
+		);
+	}
+
+	/**
+	 * Create the actual plugin settings page
+	 */
+	public function create_settings_page(): void {
+		$blade = $GLOBALS['blade'];
+
+		echo $blade->render('admin.settings', [
+			'plugin_version' => SNYC_POSTS_VERSION
+		]);
 	}
 
 	/**
