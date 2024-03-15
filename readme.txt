@@ -17,6 +17,7 @@ A simple WordPress plugin that can sync posts from one WordPress site to another
 
 = 1.1 =
 
+- Remove plugin settings and actions when uninstalling
 - Created plugin settings page
 
 = 1.0 =

@@ -44,6 +44,23 @@ class SyncPosts {
 	}
 
 	/**
+	 * Deletes plugin data on uninstall
+	 */
+	public function delete(): void {
+		// Delete options
+		$fields = self::plugin_setting_fields();
+
+		foreach ($fields as $field) {
+			delete_option($field['name']);
+		}
+
+		// Remove jobs
+		as_unschedule_all_actions('sync_posts_fetch_posts');
+		as_unschedule_all_actions('sync_posts_create_post');
+		as_unschedule_all_actions('sync_posts_sync_single_post');
+	}
+
+	/**
 	 * Setup actions
 	 */
 	public function initActions(): void {
@@ -118,18 +135,10 @@ class SyncPosts {
 	}
 
 	/**
-	 * Setup the plugin settings
+	 * Plugin settings
 	 */
-	public function initSettings(): void {
-		// Register the settings section
-		add_settings_section(
-			'sync_posts_wordpress_settings',
-			'Sync Posts for WordPress Settings',
-			[$this, 'create_settings_section'],
-			'sync-posts-wordpress',
-		);
-
-		$fields = [
+	public static function plugin_setting_fields(): array {
+		return [
 			[
 				'name' => 'sync_posts_sync_schedule',
 				'title' => 'Sync Schedule',
@@ -194,6 +203,21 @@ class SyncPosts {
 				),
 			],
 		];
+	}
+
+	/**
+	 * Setup the plugin settings
+	 */
+	public function initSettings(): void {
+		// Register the settings section
+		add_settings_section(
+			'sync_posts_wordpress_settings',
+			'Sync Posts for WordPress Settings',
+			[$this, 'create_settings_section'],
+			'sync-posts-wordpress',
+		);
+
+		$fields = self::plugin_setting_fields();
 
 		foreach ($fields as $field) {
 			register_setting('sync_posts_wordpress', $field['name'], [
