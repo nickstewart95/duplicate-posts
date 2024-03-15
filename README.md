@@ -14,9 +14,11 @@ Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that wi
 
 Drop the plugin folder in your WordPress plugins folder and run `composer install` inside the plugin folder to install the required libraries.
 
-To customize the plugin, please make use of the filters.
+To customize the plugin, please make use of the plugin settings or the filters.
 
-Ex.
+The plugin settings can be found by going to Settings -> Sync Post Settings. Note that filters will override settings.
+
+An example filter:
 
 ```
 add_filter('sync_posts_site_url', function () {

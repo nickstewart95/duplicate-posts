@@ -125,6 +125,8 @@ class Events {
 		if (empty($post_transient)) {
 			SyncPosts::logError('Could not fetch post transient');
 
+			// Todo - Send it back instead of just failing
+
 			return;
 		}
 
