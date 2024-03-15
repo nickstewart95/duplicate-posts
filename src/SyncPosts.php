@@ -330,9 +330,17 @@ class SyncPosts {
 	 */
 	public function create_settings_page(): void {
 		$blade = $GLOBALS['blade'];
+		$notice = null;
+
+		if (isset($_GET['action']) && $_GET['action'] == 'dispatch') {
+			$notice = 'Sync scheduled';
+
+			do_action('sync_posts_sync');
+		}
 
 		echo $blade->render('admin.settings', [
 			'plugin_version' => SNYC_POSTS_VERSION,
+			'notice' => $notice,
 		]);
 	}
 
