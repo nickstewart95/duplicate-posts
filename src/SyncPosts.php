@@ -131,6 +131,15 @@ class SyncPosts {
 
 		$fields = [
 			[
+				'name' => 'sync_posts_sync_schedule',
+				'title' => 'Sync Schedule',
+				'description' => 'The CRON schedule the active job runs on',
+				'value' => get_option(
+					'sync_posts_sync_schedule',
+					self::DEFAULT_SYNC_SCHEDULE,
+				),
+			],
+			[
 				'name' => 'sync_posts_site_url',
 				'title' => 'Site URL',
 				'description' => 'The WordPress Site URL to copy posts from',
