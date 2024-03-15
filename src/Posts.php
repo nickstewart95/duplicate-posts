@@ -15,12 +15,12 @@ class Posts {
 
 		$post_type = apply_filters(
 			'sync_posts_post_type_plural',
-			SyncPosts::DEFAULT_POST_TYPE_PLURAL,
+			SyncPosts::pluginSetting('sync_posts_post_type_plural'),
 		);
 
 		$posts_per_page = apply_filters(
 			'sync_posts_post_per_page',
-			SyncPosts::DEFAULT_POSTS_PER_PAGE,
+			SyncPosts::pluginSetting('sync_posts_post_per_page'),
 		);
 
 		$client = new Client([
@@ -73,7 +73,7 @@ class Posts {
 
 		$post_type = apply_filters(
 			'sync_posts_post_type_plural',
-			SyncPosts::DEFAULT_POST_TYPE_PLURAL,
+			SyncPosts::pluginSetting('sync_posts_post_type_plural'),
 		);
 
 		$client = new Client([

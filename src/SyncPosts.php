@@ -263,7 +263,7 @@ class SyncPosts {
 	public function add_metabox_to_posts(): void {
 		$post_type = apply_filters(
 			'sync_posts_post_type_single',
-			self::DEFAULT_POST_TYPE_SINGLE,
+			self::pluginSetting('sync_posts_post_type_single'),
 		);
 
 		add_meta_box(
@@ -484,7 +484,7 @@ class SyncPosts {
 	public static function getSiteUrl(): string {
 		$base_url = apply_filters(
 			'sync_posts_site_url',
-			self::DEFAULT_SITE_URL,
+			self::pluginSetting('sync_posts_site_url'),
 		);
 
 		$base_url = rtrim($base_url, '/');
@@ -500,7 +500,7 @@ class SyncPosts {
 
 		$base_url = apply_filters(
 			'sync_posts_site_url',
-			self::DEFAULT_SITE_URL,
+			self::pluginSetting('sync_posts_site_url'),
 		);
 
 		$url_array = parse_url($base_url);
@@ -529,7 +529,7 @@ class SyncPosts {
 	public static function logError(string $error_message): void {
 		$log_errors = apply_filters(
 			'sync_posts_log_errors',
-			self::DEFAULT_LOG_ERRORS,
+			self::pluginSetting('sync_posts_log_errors'),
 		);
 
 		if (!$log_errors) {
@@ -541,5 +541,52 @@ class SyncPosts {
 		$error_message = $error_message . PHP_EOL;
 
 		error_log($error_message, 3, $log_file);
+	}
+
+	/**
+	 * Grab setting value
+	 * Not a fan of this, but wanted to keep defaults if you didn't touch the settings
+	 */
+	public static function pluginSetting($setting): string {
+		if ($setting == 'sync_posts_psite_url') {
+			return get_option('sync_posts_site_url', self::DEFAULT_SITE_URL);
+		}
+
+		if ($setting == 'sync_posts_pposts_post_per_page') {
+			return get_option(
+				'sync_posts_post_per_page',
+				self::DEFAULT_POSTS_PER_PAGE,
+			);
+		}
+
+		if ($setting == 'sync_posts_pauthor_id') {
+			return get_option(
+				'sync_posts_author_id',
+				self::DEFAULT_POSTS_AUTHOR_ID,
+			);
+		}
+
+		if ($setting == 'sync_posts_post_type_single') {
+			return get_option(
+				'sync_posts_post_type_single',
+				self::DEFAULT_POST_TYPE_SINGLE,
+			);
+		}
+
+		if ($setting == 'sync_posts_post_type_plural') {
+			return get_option(
+				'sync_posts_post_type_plural',
+				self::DEFAULT_POST_TYPE_PLURAL,
+			);
+		}
+
+		if ($setting == 'sync_posts_log_errors') {
+			return get_option(
+				'sync_posts_log_errors',
+				self::DEFAULT_LOG_ERRORS,
+			);
+		}
+
+		return '';
 	}
 }

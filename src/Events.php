@@ -65,7 +65,7 @@ class Events {
 
 		$schedule = apply_filters(
 			'sync_posts_sync_schedule',
-			SyncPosts::DEFAULT_SYNC_SCHEDULE,
+			SyncPosts::pluginSetting('sync_posts_sync_schedule'),
 		);
 
 		// Check if the schedule has changed, if so update it
@@ -131,7 +131,7 @@ class Events {
 		$post = json_decode($post_transient, true);
 		$author = apply_filters(
 			'sync_posts_author_id',
-			SyncPosts::DEFAULT_POSTS_AUTHOR_ID,
+			SyncPosts::pluginSetting('sync_posts_author_id'),
 		);
 
 		$featured_image_url = null;
@@ -243,12 +243,12 @@ class Events {
 
 		$post_type_single = apply_filters(
 			'sync_posts_post_type_single',
-			SyncPosts::DEFAULT_POST_TYPE_SINGLE,
+			SyncPosts::pluginSetting('sync_posts_post_type_single'),
 		);
 
 		$post_type_plural = apply_filters(
 			'sync_posts_post_type_plural',
-			SyncPosts::DEFAULT_POST_TYPE_PLURAL,
+			SyncPosts::pluginSetting('sync_posts_post_type_plural'),
 		);
 
 		// Create taxonomy
