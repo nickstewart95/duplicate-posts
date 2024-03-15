@@ -1,8 +1,8 @@
-<div class="sync-posts-for-wordpress wrap">
+<div class="auto-copy-posts-for-wordpress wrap">
     @if (!empty($notice))
         <div class="notice notice-success is-dismissible"><p>{{ $notice }}</p></div>
     @endif
-	<h2>Sync Posts for WordPress</h2>
+	<h2>Auto Copy Posts for WordPress</h2>
     <br /><a href="/wp-admin/options-general.php?page=sync-posts-wordpress&action=dispatch" class="button button-primary">Run Manual Sync</a>
     <form action="options.php" method="post">
     @php

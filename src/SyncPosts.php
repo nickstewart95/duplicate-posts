@@ -214,7 +214,7 @@ class SyncPosts {
 		// Register the settings section
 		add_settings_section(
 			'sync_posts_wordpress_settings',
-			'Sync Posts for WordPress Settings',
+			'Auto Copy Posts for WordPress Settings',
 			[$this, 'create_settings_section'],
 			'sync-posts-wordpress',
 		);
@@ -303,7 +303,7 @@ class SyncPosts {
 
 		add_meta_box(
 			'sync_posts_post_information',
-			'Sync Post Information',
+			'Auto Copy Post Information',
 			[$this, 'create_post_metabox'],
 			$post_type,
 			'side',
@@ -317,8 +317,8 @@ class SyncPosts {
 	public function add_settings_page(): void {
 		// TODO - add filter for who can view the plugin settings
 		add_options_page(
-			'Sync Posts for Wordpress',
-			'Sync Posts Settings',
+			'Auto Copy Posts for WordPress',
+			'Auto Copy Settings',
 			'activate_plugins',
 			'sync-posts-wordpress',
 			[$this, 'create_settings_page'],

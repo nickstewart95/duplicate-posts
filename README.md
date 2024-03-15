@@ -1,8 +1,6 @@
-# Sync Posts for Wordpress
+# Auto Copy Posts for WordPress
 
 A simple WordPress plugin that can sync posts from one WordPress site to another using the REST API.
-
-While this plugin works, it was more so a project than an production plugin, hence the name conflict with other similar plugins.
 
 ## How it works
 
@@ -138,3 +136,4 @@ May or may not get to these todo items, more so if I have time and noticed I sho
 - [ ] Branding
 - [ ] Space the jobs out (currently all the jobs just sorta fire)
 - [x] Remove related events when plugin is uninstalled
+- [ ] Copy over media

@@ -1,7 +1,7 @@
-=== Sync Posts for Wordpress ===
+=== Auto Copy Posts for WordPress ===
 Author: Nick Stewart
 Author URI: https://nickstewart.me
-Tags: sync, sync, posts
+Tags: sync, copy, posts
 Requires at least: 5.3
 Tested up to: 6.1.1
 Stable tag: 1.1.0

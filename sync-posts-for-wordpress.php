@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Plugin Name:       Sync Posts for Wordpress
+ * Plugin Name:       Auto Copy Posts for WordPress
  * Description:       Sync posts from one WordPress site to another
  * Version:           1.1.0
  * Requires PHP:      8.0
