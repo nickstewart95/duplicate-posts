@@ -1,8 +1,8 @@
 {
-	"name": "nickstewart/syncposts",
+	"name": "nickstewart/autocopy",
 	"autoload": {
 		"psr-4": {
-			"Nickstewart\\SyncPosts\\": "src/"
+			"Nickstewart\\AutoCopy\\": "src/"
 		}
 	},
 	"authors": [

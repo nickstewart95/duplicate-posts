@@ -1,8 +1,8 @@
 <?php
 
-namespace Nickstewart\SyncPosts;
+namespace Nickstewart\AutoCopy;
 
-use Nickstewart\SyncPosts\SyncPosts;
+use Nickstewart\AutoCopy\AutoCopy;
 
 use GuzzleHttp\Client;
 
@@ -11,16 +11,16 @@ class Posts {
 	 * Helper function that returns a set of posts
 	 */
 	public static function requestPosts(int $page): bool|array {
-		$base_url = SyncPosts::getSiteUrl();
+		$base_url = AutoCopy::getSiteUrl();
 
 		$post_type = apply_filters(
-			'sync_posts_post_type_plural',
-			SyncPosts::pluginSetting('sync_posts_post_type_plural'),
+			'auto_copy_posts_post_type_plural',
+			AutoCopy::pluginSetting('auto_copy_posts_post_type_plural'),
 		);
 
 		$posts_per_page = apply_filters(
-			'sync_posts_post_per_page',
-			SyncPosts::pluginSetting('sync_posts_post_per_page'),
+			'auto_copy_posts_post_per_page',
+			AutoCopy::pluginSetting('auto_copy_posts_post_per_page'),
 		);
 
 		$client = new Client([
@@ -39,12 +39,12 @@ class Posts {
 			if ($response->getStatusCode() !== 200) {
 				$error_message =
 					'Error fetching posts: ' . $response->getStatusCode();
-				SyncPosts::logError($error_message);
+				AutoCopy::logError($error_message);
 
 				return false;
 			}
 		} catch (\Exception $e) {
-			SyncPosts::logError($e->getMessage());
+			AutoCopy::logError($e->getMessage());
 			return false;
 		}
 
@@ -63,17 +63,17 @@ class Posts {
 	public static function requestPost(int $post_id) {
 		$original_post_id = get_post_meta(
 			$post_id,
-			'sync_posts_original_id',
+			'auto_copy_posts_original_id',
 			true,
 		);
 
-		$original_post_id_stripped = SyncPosts::stripPostId($original_post_id);
+		$original_post_id_stripped = AutoCopy::stripPostId($original_post_id);
 
-		$base_url = SyncPosts::getSiteUrl();
+		$base_url = AutoCopy::getSiteUrl();
 
 		$post_type = apply_filters(
-			'sync_posts_post_type_plural',
-			SyncPosts::pluginSetting('sync_posts_post_type_plural'),
+			'auto_copy_posts_post_type_plural',
+			AutoCopy::pluginSetting('auto_copy_posts_post_type_plural'),
 		);
 
 		$client = new Client([
@@ -91,10 +91,10 @@ class Posts {
 			if ($response->getStatusCode() !== 200) {
 				$error_message =
 					'Error fetching single post: ' . $response->getStatusCode();
-				SyncPosts::logError($error_message);
+				AutoCopy::logError($error_message);
 			}
 		} catch (\Exception $e) {
-			SyncPosts::logError($e->getMessage());
+			AutoCopy::logError($e->getMessage());
 			return;
 		}
 

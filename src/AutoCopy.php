@@ -1,16 +1,16 @@
 <?php
 
-namespace Nickstewart\SyncPosts;
+namespace Nickstewart\AutoCopy;
 
-use Nickstewart\SyncPosts\Events;
+use Nickstewart\AutoCopy\Events;
 
 use Carbon\Carbon;
 use Jenssegers\Blade\Blade;
 
-define('SYNC_POSTS_VERSION', '1.1.0');
-define('SYNC_POSTS_FILE', __FILE__);
+define('AUTO_COPY_POSTS_VERSION', '1.1.0');
+define('AUTO_COPY_POSTS_FILE', __FILE__);
 
-class SyncPosts {
+class AutoCopy {
 	private static $instance = null;
 
 	const DEFAULT_SYNC_SCHEDULE = '0 4,14 * * *';
@@ -45,7 +45,7 @@ class SyncPosts {
 
 	/**
 	 * Deletes plugin data on uninstall
-	 * Doesn't delete sync_posts_registered_taxonomies
+	 * Doesn't delete auto_copy_posts_registered_taxonomies
 	 */
 	public function delete(): void {
 		// Delete options
@@ -56,32 +56,32 @@ class SyncPosts {
 		}
 
 		// Remove jobs
-		as_unschedule_all_actions('sync_posts_sync');
-		as_unschedule_all_actions('sync_posts_fetch_posts');
-		as_unschedule_all_actions('sync_posts_create_post');
-		as_unschedule_all_actions('sync_posts_sync_single_post');
+		as_unschedule_all_actions('auto_copy_posts_sync');
+		as_unschedule_all_actions('auto_copy_posts_fetch_posts');
+		as_unschedule_all_actions('auto_copy_posts_create_post');
+		as_unschedule_all_actions('auto_copy_posts_sync_single_post');
 	}
 
 	/**
 	 * Setup actions
 	 */
 	public function initActions(): void {
-		add_action('sync_posts_sync', [$this, 'sync'], 10, 0);
+		add_action('auto_copy_posts_sync', [$this, 'sync'], 10, 0);
 
 		add_action(
-			'sync_posts_fetch_posts',
+			'auto_copy_posts_fetch_posts',
 			[Events::class, 'fetchPosts'],
 			10,
 			1,
 		);
 		add_action(
-			'sync_posts_create_post',
+			'auto_copy_posts_create_post',
 			[Events::class, 'createPost'],
 			10,
 			1,
 		);
 		add_action(
-			'sync_posts_sync_single_post',
+			'auto_copy_posts_sync_single_post',
 			[Events::class, 'syncPost'],
 			10,
 			1,
@@ -97,39 +97,49 @@ class SyncPosts {
 	 */
 	public function initFilters(): void {
 		add_filter(
-			'sync_posts_sync_schedule',
+			'auto_copy_posts_sync_schedule',
 			[$this, 'filter_sync_schedule'],
 			10,
 			1,
 		);
 
-		add_filter('sync_posts_site_url', [$this, 'filter_site_url'], 10, 1);
+		add_filter(
+			'auto_copy_posts_site_url',
+			[$this, 'filter_site_url'],
+			10,
+			1,
+		);
 
 		add_filter(
-			'sync_posts_post_per_page',
+			'auto_copy_posts_post_per_page',
 			[$this, 'filter_posts_per_page'],
 			10,
 			1,
 		);
 
-		add_filter('sync_posts_author_id', [$this, 'filters_author_id'], 10, 1);
+		add_filter(
+			'auto_copy_posts_author_id',
+			[$this, 'filters_author_id'],
+			10,
+			1,
+		);
 
 		add_filter(
-			'sync_posts_post_type_single',
+			'auto_copy_posts_post_type_single',
 			[$this, 'filters_post_type_single'],
 			10,
 			1,
 		);
 
 		add_filter(
-			'sync_posts_post_type_plural',
+			'auto_copy_posts_post_type_plural',
 			[$this, 'filters_post_type_plural'],
 			10,
 			1,
 		);
 
 		add_filter(
-			'sync_posts_log_errors',
+			'auto_copy_posts_log_errors',
 			[$this, 'filters_log_errors'],
 			10,
 			1,
@@ -142,65 +152,65 @@ class SyncPosts {
 	public static function plugin_setting_fields(): array {
 		return [
 			[
-				'name' => 'sync_posts_sync_schedule',
+				'name' => 'auto_copy_posts_sync_schedule',
 				'title' => 'Sync Schedule',
 				'description' => 'The CRON schedule the active job runs on',
 				'value' => get_option(
-					'sync_posts_sync_schedule',
+					'auto_copy_posts_sync_schedule',
 					self::DEFAULT_SYNC_SCHEDULE,
 				),
 			],
 			[
-				'name' => 'sync_posts_site_url',
+				'name' => 'auto_copy_posts_site_url',
 				'title' => 'Site URL',
 				'description' => 'The WordPress Site URL to copy posts from',
 				'value' => get_option(
-					'sync_posts_site_url',
+					'auto_copy_posts_site_url',
 					self::DEFAULT_SITE_URL,
 				),
 			],
 			[
-				'name' => 'sync_posts_post_per_page',
+				'name' => 'auto_copy_posts_post_per_page',
 				'title' => 'Posts Per Page',
 				'description' => 'How many posts are grabbed at once',
 				'value' => get_option(
-					'sync_posts_post_per_page',
+					'auto_copy_posts_post_per_page',
 					self::DEFAULT_POSTS_PER_PAGE,
 				),
 			],
 			[
-				'name' => 'sync_posts_author_id',
+				'name' => 'auto_copy_posts_author_id',
 				'title' => 'Author ID',
 				'description' => 'The author to associate the synced posts to',
 				'value' => get_option(
-					'sync_posts_author_id',
+					'auto_copy_posts_author_id',
 					self::DEFAULT_POSTS_AUTHOR_ID,
 				),
 			],
 			[
-				'name' => 'sync_posts_post_type_single',
+				'name' => 'auto_copy_posts_post_type_single',
 				'title' => 'Post Type, single',
 				'description' => 'The post type being synced, singular name',
 				'value' => get_option(
-					'sync_posts_post_type_single',
+					'auto_copy_posts_post_type_single',
 					self::DEFAULT_POST_TYPE_SINGLE,
 				),
 			],
 			[
-				'name' => 'sync_posts_post_type_plural',
+				'name' => 'auto_copy_posts_post_type_plural',
 				'title' => 'Post Type, plural',
 				'description' => 'The post type being synced, plural name',
 				'value' => get_option(
-					'sync_posts_post_type_plural',
+					'auto_copy_posts_post_type_plural',
 					self::DEFAULT_POST_TYPE_PLURAL,
 				),
 			],
 			[
-				'name' => 'sync_posts_log_errors',
+				'name' => 'auto_copy_posts_log_errors',
 				'title' => 'Log plugin errors',
 				'description' => 'Log plugin errors to a local file',
 				'value' => get_option(
-					'sync_posts_log_errors',
+					'auto_copy_posts_log_errors',
 					self::DEFAULT_LOG_ERRORS,
 				),
 			],
@@ -213,16 +223,16 @@ class SyncPosts {
 	public function initSettings(): void {
 		// Register the settings section
 		add_settings_section(
-			'sync_posts_wordpress_settings',
+			'auto_copy_posts_wordpress_settings',
 			'Auto Copy Posts for WordPress Settings',
 			[$this, 'create_settings_section'],
-			'sync-posts-wordpress',
+			'auto-copy-posts-wordpress',
 		);
 
 		$fields = self::plugin_setting_fields();
 
 		foreach ($fields as $field) {
-			register_setting('sync_posts_wordpress', $field['name'], [
+			register_setting('auto_copy_posts_wordpress', $field['name'], [
 				'type' => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			]);
@@ -231,8 +241,8 @@ class SyncPosts {
 				$field['name'],
 				$field['title'],
 				[$this, 'render_settings_field'],
-				'sync-posts-wordpress',
-				'sync_posts_wordpress_settings',
+				'auto-copy-posts-wordpress',
+				'auto_copy_posts_wordpress_settings',
 				$field,
 			);
 		}
@@ -243,7 +253,7 @@ class SyncPosts {
 	 */
 	public function initTaxonomy(): void {
 		$registered_taxonomies = get_option(
-			'sync_posts_registered_taxonomies',
+			'auto_copy_posts_registered_taxonomies',
 			[],
 		);
 
@@ -297,12 +307,12 @@ class SyncPosts {
 	 */
 	public function add_metabox_to_posts(): void {
 		$post_type = apply_filters(
-			'sync_posts_post_type_single',
-			self::pluginSetting('sync_posts_post_type_single'),
+			'auto_copy_posts_post_type_single',
+			self::pluginSetting('auto_copy_posts_post_type_single'),
 		);
 
 		add_meta_box(
-			'sync_posts_post_information',
+			'auto_copy_posts_post_information',
 			'Auto Copy Post Information',
 			[$this, 'create_post_metabox'],
 			$post_type,
@@ -320,7 +330,7 @@ class SyncPosts {
 			'Auto Copy Posts for WordPress',
 			'Auto Copy Settings',
 			'activate_plugins',
-			'sync-posts-wordpress',
+			'auto-copy-posts-wordpress',
 			[$this, 'create_settings_page'],
 		);
 	}
@@ -335,11 +345,11 @@ class SyncPosts {
 		if (isset($_GET['action']) && $_GET['action'] == 'dispatch') {
 			$notice = 'Sync scheduled';
 
-			do_action('sync_posts_sync');
+			do_action('auto_copy_posts_sync');
 		}
 
 		echo $blade->render('admin.settings', [
-			'plugin_version' => SYNC_POSTS_VERSION,
+			'plugin_version' => AUTO_COPY_POSTS_VERSION,
 			'notice' => $notice,
 		]);
 	}
@@ -372,7 +382,7 @@ class SyncPosts {
 
 		$modification_date = get_post_meta(
 			$post_id,
-			'sync_posts_original_modification_date',
+			'auto_copy_posts_original_modification_date',
 			true,
 		);
 		$modification_date_formatted = Carbon::parse($modification_date)
@@ -381,7 +391,7 @@ class SyncPosts {
 
 		$last_synced_date = get_post_meta(
 			$post_id,
-			'sync_posts_last_synced_date_gtm',
+			'auto_copy_posts_last_synced_date_gtm',
 			true,
 		);
 
@@ -389,10 +399,10 @@ class SyncPosts {
 			->setTimezone($user_timezone)
 			->format('M d, Y g:i a');
 
-		$url = get_post_meta($post_id, 'sync_posts_original_url', true);
+		$url = get_post_meta($post_id, 'auto_copy_posts_original_url', true);
 
-		$is_syncing = !empty($_GET['sync_posts_syncing'])
-			? $_GET['sync_posts_syncing']
+		$is_syncing = !empty($_GET['auto_copy_posts_syncing'])
+			? $_GET['auto_copy_posts_syncing']
 			: false;
 
 		// TODO - refactor into a template
@@ -404,7 +414,7 @@ class SyncPosts {
 			global $wp;
 			$current_url =
 				'/wp-admin/post.php' . add_query_arg($_GET, $wp->request);
-			$sync_url = $current_url . '&sync_posts_syncing=true';
+			$sync_url = $current_url . '&auto_copy_posts_syncing=true';
 
 			$html .= "<p><a href='{$sync_url}' class='button button-primary'>Sync</a></p>";
 		}
@@ -416,8 +426,8 @@ class SyncPosts {
 	 * Run a manual sync
 	 */
 	public function check_for_manual_sync(): void {
-		$is_syncing = !empty($_GET['sync_posts_syncing'])
-			? $_GET['sync_posts_syncing']
+		$is_syncing = !empty($_GET['auto_copy_posts_syncing'])
+			? $_GET['auto_copy_posts_syncing']
 			: false;
 
 		if (!$is_syncing) {
@@ -429,7 +439,7 @@ class SyncPosts {
 		// Check to make sure its not already scheduled
 		$scheduled_job = as_get_scheduled_actions(
 			[
-				'hook' => 'sync_posts_sync_single_post',
+				'hook' => 'auto_copy_posts_sync_single_post',
 				'status' => 'pending',
 				'args' => [
 					'post_id' => (string) $post_id,
@@ -444,11 +454,11 @@ class SyncPosts {
 
 		as_schedule_single_action(
 			time(),
-			'sync_posts_sync_single_post',
+			'auto_copy_posts_sync_single_post',
 			[
 				'post_id' => $post_id,
 			],
-			'sync_posts_sync_post',
+			'auto_copy_posts_sync_post',
 		);
 	}
 
@@ -510,7 +520,7 @@ class SyncPosts {
 	): string {
 		$post_id = self::mutatePostId($post['id']);
 
-		$name = 'sync_posts_temp_' . $post_id;
+		$name = 'auto_copy_posts_temp_' . $post_id;
 
 		if ($create) {
 			$post = json_encode($post);
@@ -526,8 +536,8 @@ class SyncPosts {
 	 */
 	public static function getSiteUrl(): string {
 		$base_url = apply_filters(
-			'sync_posts_site_url',
-			self::pluginSetting('sync_posts_site_url'),
+			'auto_copy_posts_site_url',
+			self::pluginSetting('auto_copy_posts_site_url'),
 		);
 
 		$base_url = rtrim($base_url, '/');
@@ -542,8 +552,8 @@ class SyncPosts {
 		//site url with id append
 
 		$base_url = apply_filters(
-			'sync_posts_site_url',
-			self::pluginSetting('sync_posts_site_url'),
+			'auto_copy_posts_site_url',
+			self::pluginSetting('auto_copy_posts_site_url'),
 		);
 
 		$url_array = parse_url($base_url);
@@ -571,8 +581,8 @@ class SyncPosts {
 	 */
 	public static function logError(string $error_message): void {
 		$log_errors = apply_filters(
-			'sync_posts_log_errors',
-			self::pluginSetting('sync_posts_log_errors'),
+			'auto_copy_posts_log_errors',
+			self::pluginSetting('auto_copy_posts_log_errors'),
 		);
 
 		if (!$log_errors) {
@@ -591,41 +601,44 @@ class SyncPosts {
 	 * Not a fan of this, but wanted to keep defaults if you didn't touch the settings
 	 */
 	public static function pluginSetting($setting): string {
-		if ($setting == 'sync_posts_psite_url') {
-			return get_option('sync_posts_site_url', self::DEFAULT_SITE_URL);
+		if ($setting == 'auto_copy_posts_psite_url') {
+			return get_option(
+				'auto_copy_posts_site_url',
+				self::DEFAULT_SITE_URL,
+			);
 		}
 
-		if ($setting == 'sync_posts_pposts_post_per_page') {
+		if ($setting == 'auto_copy_posts_pposts_post_per_page') {
 			return get_option(
-				'sync_posts_post_per_page',
+				'auto_copy_posts_post_per_page',
 				self::DEFAULT_POSTS_PER_PAGE,
 			);
 		}
 
-		if ($setting == 'sync_posts_pauthor_id') {
+		if ($setting == 'auto_copy_posts_pauthor_id') {
 			return get_option(
-				'sync_posts_author_id',
+				'auto_copy_posts_author_id',
 				self::DEFAULT_POSTS_AUTHOR_ID,
 			);
 		}
 
-		if ($setting == 'sync_posts_post_type_single') {
+		if ($setting == 'auto_copy_posts_post_type_single') {
 			return get_option(
-				'sync_posts_post_type_single',
+				'auto_copy_posts_post_type_single',
 				self::DEFAULT_POST_TYPE_SINGLE,
 			);
 		}
 
-		if ($setting == 'sync_posts_post_type_plural') {
+		if ($setting == 'auto_copy_posts_post_type_plural') {
 			return get_option(
-				'sync_posts_post_type_plural',
+				'auto_copy_posts_post_type_plural',
 				self::DEFAULT_POST_TYPE_PLURAL,
 			);
 		}
 
-		if ($setting == 'sync_posts_log_errors') {
+		if ($setting == 'auto_copy_posts_log_errors') {
 			return get_option(
-				'sync_posts_log_errors',
+				'auto_copy_posts_log_errors',
 				self::DEFAULT_LOG_ERRORS,
 			);
 		}

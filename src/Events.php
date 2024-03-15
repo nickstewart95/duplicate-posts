@@ -1,9 +1,9 @@
 <?php
 
-namespace Nickstewart\SyncPosts;
+namespace Nickstewart\AutoCopy;
 
-use Nickstewart\SyncPosts\SyncPosts;
-use Nickstewart\SyncPosts\Posts;
+use Nickstewart\AutoCopy\AutoCopy;
+use Nickstewart\AutoCopy\Posts;
 
 use Carbon\Carbon;
 
@@ -42,11 +42,11 @@ class Events {
 		for ($i = 2; $i < $page_count + 1; $i++) {
 			as_schedule_single_action(
 				time(),
-				'sync_posts_fetch_posts',
+				'auto_copy_posts_fetch_posts',
 				[
 					'page' => $i,
 				],
-				'sync_posts_fetch',
+				'auto_copy_posts_fetch',
 			);
 		}
 	}
@@ -57,24 +57,24 @@ class Events {
 	public static function scheduleSync(): void {
 		$scheduled_job = as_get_scheduled_actions(
 			[
-				'hook' => 'sync_posts_sync_schedule',
-				'group' => 'sync_posts_daily_sync',
+				'hook' => 'auto_copy_posts_sync_schedule',
+				'group' => 'auto_copy_posts_daily_sync',
 			],
 			'ARRAY_A',
 		);
 
 		$schedule = apply_filters(
-			'sync_posts_sync_schedule',
-			SyncPosts::pluginSetting('sync_posts_sync_schedule'),
+			'auto_copy_posts_sync_schedule',
+			AutoCopy::pluginSetting('auto_copy_posts_sync_schedule'),
 		);
 
 		// Check if the schedule has changed, if so update it
 		if (!empty($scheduled_job)) {
 			if ($scheduled_job['schedule'] != $schedule) {
 				as_unschedule_all_actions(
-					'sync_posts_sync_schedule',
+					'auto_copy_posts_sync_schedule',
 					[],
-					'sync_posts_daily_sync',
+					'auto_copy_posts_daily_sync',
 				);
 			} else {
 				return;
@@ -85,9 +85,9 @@ class Events {
 		as_schedule_cron_action(
 			time(),
 			$schedule,
-			'sync_posts_sync',
+			'auto_copy_posts_sync',
 			[],
-			'sync_posts_daily_sync',
+			'auto_copy_posts_daily_sync',
 			true,
 			10,
 		);
@@ -103,15 +103,15 @@ class Events {
 
 		foreach ($posts as $post) {
 			// Post data is too large to pass to action, so we will store it temporarliy to pass and then delete
-			$transient = SyncPosts::postTransient($post, true);
+			$transient = AutoCopy::postTransient($post, true);
 
 			as_schedule_single_action(
 				time(),
-				'sync_posts_create_post',
+				'auto_copy_posts_create_post',
 				[
 					'transient' => $transient,
 				],
-				'sync_posts_create',
+				'auto_copy_posts_create',
 			);
 		}
 	}
@@ -123,7 +123,7 @@ class Events {
 		$post_transient = get_transient($transient);
 
 		if (empty($post_transient)) {
-			SyncPosts::logError('Could not fetch post transient');
+			AutoCopy::logError('Could not fetch post transient');
 
 			// Todo - Send it back instead of just failing
 
@@ -132,8 +132,8 @@ class Events {
 
 		$post = json_decode($post_transient, true);
 		$author = apply_filters(
-			'sync_posts_author_id',
-			SyncPosts::pluginSetting('sync_posts_author_id'),
+			'auto_copy_posts_author_id',
+			AutoCopy::pluginSetting('auto_copy_posts_author_id'),
 		);
 
 		$featured_image_url = null;
@@ -148,13 +148,14 @@ class Events {
 		// Meta from the post
 		$meta = $post['meta'];
 
-		$mutated_id = SyncPosts::mutatePostId($post['id']);
+		$mutated_id = AutoCopy::mutatePostId($post['id']);
 
 		// Plugin custom meta
-		$meta['sync_posts_original_id'] = $mutated_id;
-		$meta['sync_posts_original_modification_date'] = $post['modified_gmt'];
-		$meta['sync_posts_original_url'] = $post['link'];
-		$meta['sync_posts_last_synced_date_gtm'] = Carbon::now('UTC');
+		$meta['auto_copy_posts_original_id'] = $mutated_id;
+		$meta['auto_copy_posts_original_modification_date'] =
+			$post['modified_gmt'];
+		$meta['auto_copy_posts_original_url'] = $post['link'];
+		$meta['auto_copy_posts_last_synced_date_gtm'] = Carbon::now('UTC');
 
 		// Setup the terms
 		$terms_parent = $post['_embedded']['wp:term'];
@@ -244,13 +245,13 @@ class Events {
 		}
 
 		$post_type_single = apply_filters(
-			'sync_posts_post_type_single',
-			SyncPosts::pluginSetting('sync_posts_post_type_single'),
+			'auto_copy_posts_post_type_single',
+			AutoCopy::pluginSetting('auto_copy_posts_post_type_single'),
 		);
 
 		$post_type_plural = apply_filters(
-			'sync_posts_post_type_plural',
-			SyncPosts::pluginSetting('sync_posts_post_type_plural'),
+			'auto_copy_posts_post_type_plural',
+			AutoCopy::pluginSetting('auto_copy_posts_post_type_plural'),
 		);
 
 		// Create taxonomy
@@ -268,14 +269,14 @@ class Events {
 
 		// Store in the database so it stays registered
 		$registered_taxonomies = get_option(
-			'sync_posts_registered_taxonomies',
+			'auto_copy_posts_registered_taxonomies',
 			[],
 		);
 
 		$registered_taxonomies[] = $args;
 
 		update_option(
-			'sync_posts_registered_taxonomies',
+			'auto_copy_posts_registered_taxonomies',
 			$registered_taxonomies,
 		);
 
@@ -335,7 +336,7 @@ SELECT post_id, meta_value
 FROM {$wpdb->prefix}postmeta
 WHERE meta_key = %s
 ",
-				'sync_posts_original_id',
+				'auto_copy_posts_original_id',
 			),
 		);
 

@@ -4,7 +4,7 @@ A simple WordPress plugin that can sync posts from one WordPress site to another
 
 ## How it works
 
-There is an action, `sync_posts_sync`, that will query a WordPress site, `sync_posts_site_url`, and loop thru chunks, `sync_posts_post_per_page` of posts. Each chunk gets an event, `fetch_posts`, to avoid query too many posts at once on the source site.
+There is an action, `auto_copy_posts_sync`, that will query a WordPress site, `auto_copy_posts_site_url`, and loop thru chunks, `auto_copy_posts_post_per_page` of posts. Each chunk gets an event, `fetch_posts`, to avoid query too many posts at once on the source site.
 
 Inside of `fetch_posts`, each post gets sent to an event, `create_post`, that will actually create or update the post locally. This is also in a job to prevent any server stress when creating too many posts at once.
 
@@ -19,27 +19,27 @@ The plugin settings can be found by going to Settings -> Sync Post Settings. Not
 An example filter:
 
 ```
-add_filter('sync_posts_site_url', function () {
+add_filter('auto_copy_posts_site_url', function () {
 	return 'https://yokoco.com/';
 });
 ```
 
 The daily sync event will automatically be created when the plugin is loaded.
 
-If you do not want to wait, you can use the ActionScheduler plugin to manually run this event or run `do_action('sync_posts_sync')` to start a sync.
+If you do not want to wait, you can use the ActionScheduler plugin to manually run this event or run `do_action('auto_copy_posts_sync')` to start a sync.
 
 Clicking into an individual post (that is a copied post) will display a metabox that will allow you to manually since that one one post.
 
 ## Uninstall
 
-If you deactive and delete the plugin, the plugin settings and scheduled actions will be removed and deleted. In order to prevent breaking the synced posts, the `sync_posts_registered_taxonomies` setting does not get deleted, that way the custom taxonomy that have been synced do not break.
+If you deactive and delete the plugin, the plugin settings and scheduled actions will be removed and deleted. In order to prevent breaking the synced posts, the `auto_copy_posts_registered_taxonomies` setting does not get deleted, that way the custom taxonomy that have been synced do not break.
 
 To reapply those taxonomies outside of the plugin, copy the following code to your theme's `functions.php`
 
 ```
 add_action('init', function() {
 	$registered_taxonomies = get_option(
-		'sync_posts_registered_taxonomies',
+		'auto_copy_posts_registered_taxonomies',
 		[],
 	);
 
@@ -77,45 +77,45 @@ Errors are logged to error.log inside the plugin folder
 
 ### Filters
 
-`sync_posts_sync_schedule` - The cron schedule for how often the sync runs, default value is `0 4,14 * * *`;
+`auto_copy_posts_sync_schedule` - The cron schedule for how often the sync runs, default value is `0 4,14 * * *`;
 
-`sync_posts_site_url` - The url of the WordPress site posts are being syncd from, default value is `https://tjwrestling.com`
+`auto_copy_posts_site_url` - The url of the WordPress site posts are being syncd from, default value is `https://tjwrestling.com`
 
-`sync_posts_post_per_page` - The number of posts being grabbed at a time, default value is `10`
+`auto_copy_posts_post_per_page` - The number of posts being grabbed at a time, default value is `10`
 
-`sync_posts_author_id` - The author ID copied posts are associated with, default value is `1`
+`auto_copy_posts_author_id` - The author ID copied posts are associated with, default value is `1`
 
-`sync_posts_post_type_single` - The post type being retrieved, singular form, default value is `post`
+`auto_copy_posts_post_type_single` - The post type being retrieved, singular form, default value is `post`
 
-`sync_posts_post_type_plural` - The post type being retrieved, plural form, default value is `posts`
+`auto_copy_posts_post_type_plural` - The post type being retrieved, plural form, default value is `posts`
 
-`sync_posts_log_errors` - If errors should be logged, default value is `true`
+`auto_copy_posts_log_errors` - If errors should be logged, default value is `true`
 
 ### Actions
 
-`sync_posts_sync` - Starts the sync
+`auto_copy_posts_sync` - Starts the sync
 
 ### Scheduled Events
 
-`sync_posts_fetch_posts` - Fetches posts per page and then creates events for each
+`auto_copy_posts_fetch_posts` - Fetches posts per page and then creates events for each
 
-`sync_posts_create_post` - Creates/updates individual posts
+`auto_copy_posts_create_post` - Creates/updates individual posts
 
-`sync_posts_sync_single_post` - Syncs a single post
+`auto_copy_posts_sync_single_post` - Syncs a single post
 
 ### Meta Data
 
-`sync_posts_original_id` - The post ID from the source site, prepended with the top level domain it came from
+`auto_copy_posts_original_id` - The post ID from the source site, prepended with the top level domain it came from
 
-`sync_posts_original_modification_date` - The last modified date from the source site
+`auto_copy_posts_original_modification_date` - The last modified date from the source site
 
-`sync_posts_original_url` - The post URL from the source site
+`auto_copy_posts_original_url` - The post URL from the source site
 
-`sync_posts_last_synced_date_gtm` -The last time the post was synced over
+`auto_copy_posts_last_synced_date_gtm` -The last time the post was synced over
 
 ### Option Data
 
-`sync_posts_registered_taxonomies` - Contains the taxonomy data from copied posts so they can be recreated
+`auto_copy_posts_registered_taxonomies` - Contains the taxonomy data from copied posts so they can be recreated
 
 ## Todo
 
