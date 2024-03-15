@@ -479,15 +479,15 @@ class AutoCopy {
 	/**
 	 * Posts per page when hitting the REST API
 	 */
-	public function filter_posts_per_page(int $posts): int {
-		return $posts;
+	public function filter_posts_per_page(int|string $posts): int {
+		return (int) $posts;
 	}
 
 	/**
 	 * Posts per page when hitting the REST API
 	 */
-	public function filters_author_id(int $id): int {
-		return $id;
+	public function filters_author_id(int|string $id): int {
+		return (int) $id;
 	}
 
 	/**
@@ -601,21 +601,28 @@ class AutoCopy {
 	 * Not a fan of this, but wanted to keep defaults if you didn't touch the settings
 	 */
 	public static function pluginSetting($setting): string {
-		if ($setting == 'auto_copy_posts_psite_url') {
+		if ($setting == 'auto_copy_posts_sync_schedule') {
+			return get_option(
+				'auto_copy_posts_sync_schedule',
+				self::DEFAULT_SYNC_SCHEDULE,
+			);
+		}
+
+		if ($setting == 'auto_copy_posts_site_url') {
 			return get_option(
 				'auto_copy_posts_site_url',
 				self::DEFAULT_SITE_URL,
 			);
 		}
 
-		if ($setting == 'auto_copy_posts_pposts_post_per_page') {
+		if ($setting == 'auto_copy_posts_post_per_page') {
 			return get_option(
 				'auto_copy_posts_post_per_page',
 				self::DEFAULT_POSTS_PER_PAGE,
 			);
 		}
 
-		if ($setting == 'auto_copy_posts_pauthor_id') {
+		if ($setting == 'auto_copy_posts_author_id') {
 			return get_option(
 				'auto_copy_posts_author_id',
 				self::DEFAULT_POSTS_AUTHOR_ID,
