@@ -5,6 +5,7 @@ namespace Nickstewart\SyncPosts;
 use Nickstewart\SyncPosts\Events;
 
 use Carbon\Carbon;
+use Jenssegers\Blade\Blade;
 
 define('SNYC_POSTS_VERSION', '1.0.0');
 define('SYNC_POSTS_FILE', __FILE__);
@@ -148,6 +149,16 @@ class SyncPosts {
 				$args,
 			);
 		}
+	}
+
+	/**
+	 * Setup Blade for templating
+	 */
+	public static function initBladeViews() {
+		$views = __DIR__ . '/resources/pages';
+		$cache = __DIR__ . '/cache';
+
+		return new Blade($views, $cache);
 	}
 
 	/**

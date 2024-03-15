@@ -23,3 +23,5 @@ use Nickstewart\SyncPosts\SyncPosts;
 
 $sync_posts = SyncPosts::get_instance();
 $sync_posts->setup();
+
+$GLOBALS['blade'] = $sync_posts->initBladeViews();
