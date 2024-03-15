@@ -32,6 +32,47 @@ If you do not want to wait, you can use the ActionScheduler plugin to manually r
 
 Clicking into an individual post (that is a copied post) will display a metabox that will allow you to manually since that one one post.
 
+## Uninstall
+
+If you deactive and delete the plugin, the plugin settings and scheduled actions will be removed and deleted. In order to prevent breaking the synced posts, the `sync_posts_registered_taxonomies` setting does not get deleted, that way the custom taxonomy that have been synced do not break.
+
+To reapply those taxonomies outside of the plugin, copy the following code to your theme's `functions.php`
+
+```
+add_action('init', function() {
+	$registered_taxonomies = get_option(
+		'sync_posts_registered_taxonomies',
+		[],
+	);
+
+	if (empty($registered_taxonomies)) {
+		return;
+	}
+
+	foreach ($registered_taxonomies as $taxonomy) {
+		$pretty_name = str_replace('-', ' ', $taxonomy['name']);
+		$pretty_name = ucwords($pretty_name);
+
+		$args = [
+			'hierarchical' => true,
+			'show_ui' => true,
+			'show_admin_column' => true,
+			'has_archive' => true,
+			'labels' => [
+				'name' => $pretty_name,
+				'singular_name' => $pretty_name,
+			],
+		];
+
+		register_taxonomy(
+			$taxonomy['name'],
+			[$taxonomy['post_type_single']],
+			$args,
+		);
+	}
+});
+```
+
 ## Dev Guide
 
 Errors are logged to error.log inside the plugin folder
@@ -96,4 +137,4 @@ May or may not get to these todo items, more so if I have time and noticed I sho
 - [x] Rename the plugin for production use
 - [ ] Branding
 - [ ] Space the jobs out (currently all the jobs just sorta fire)
-- [ ] Remove related events when plugin is uninstalled
+- [x] Remove related events when plugin is uninstalled

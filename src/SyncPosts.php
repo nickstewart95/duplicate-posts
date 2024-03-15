@@ -45,6 +45,7 @@ class SyncPosts {
 
 	/**
 	 * Deletes plugin data on uninstall
+	 * Doesn't delete sync_posts_registered_taxonomies
 	 */
 	public function delete(): void {
 		// Delete options
@@ -55,6 +56,7 @@ class SyncPosts {
 		}
 
 		// Remove jobs
+		as_unschedule_all_actions('sync_posts_sync');
 		as_unschedule_all_actions('sync_posts_fetch_posts');
 		as_unschedule_all_actions('sync_posts_create_post');
 		as_unschedule_all_actions('sync_posts_sync_single_post');
