@@ -20,6 +20,7 @@ class AutoCopy {
 	const DEFAULT_POST_TYPE_SINGLE = 'post';
 	const DEFAULT_POST_TYPE_PLURAL = 'posts';
 	const DEFAULT_LOG_ERRORS = true;
+	const DEFAULT_COPY_POST_IMAGES = false;
 
 	/**
 	 * Class instance
@@ -144,6 +145,13 @@ class AutoCopy {
 			10,
 			1,
 		);
+
+		add_filter(
+			'auto_copy_posts_post_images',
+			[$this, 'filters_post_images'],
+			10,
+			1,
+		);
 	}
 
 	/**
@@ -212,6 +220,16 @@ class AutoCopy {
 				'value' => get_option(
 					'auto_copy_posts_log_errors',
 					self::DEFAULT_LOG_ERRORS,
+				),
+			],
+			[
+				'name' => 'auto_copy_posts_post_images',
+				'title' => 'Copy Post images',
+				'description' =>
+					'If relative images are found in the post if they should be downloaded and made relative',
+				'value' => get_option(
+					'auto_copy_posts_post_images',
+					self::DEFAULT_COPY_POST_IMAGES,
 				),
 			],
 		];
@@ -512,6 +530,13 @@ class AutoCopy {
 	}
 
 	/**
+	 * The post type used when hitting the REST API
+	 */
+	public function filters_post_images(bool $filter): bool {
+		return $filter;
+	}
+
+	/**
 	 * Return a post transient name with the option to create it
 	 */
 	public static function postTransient(
@@ -644,10 +669,29 @@ class AutoCopy {
 		}
 
 		if ($setting == 'auto_copy_posts_log_errors') {
-			return get_option(
+			$value = get_option(
 				'auto_copy_posts_log_errors',
 				self::DEFAULT_LOG_ERRORS,
 			);
+
+			if ($value == 'false' || !$value) {
+				return false;
+			}
+
+			return true;
+		}
+
+		if ($setting == 'auto_copy_posts_post_images') {
+			$value = get_option(
+				'auto_copy_posts_post_images',
+				self::DEFAULT_COPY_POST_IMAGES,
+			);
+
+			if ($value == 'false' || !$value) {
+				return false;
+			}
+
+			return true;
 		}
 
 		return '';

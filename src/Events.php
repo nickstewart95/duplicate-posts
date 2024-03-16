@@ -197,12 +197,23 @@ class Events {
 			}
 		}
 
+		$content = $post['content']['rendered'];
+
+		$download_images = apply_filters(
+			'auto_copy_posts_post_images',
+			AutoCopy::pluginSetting('auto_copy_posts_post_images'),
+		);
+
+		if ($download_images) {
+			// TODO - grab images in post, download theme, and make the url relative
+		}
+
 		// Setup post attributes
 		$data = [
 			'post_title' => $post['title']['rendered'],
 			'post_excerpt' => $post['excerpt']['rendered'],
 			'meta_input' => $meta,
-			'post_content' => $post['content']['rendered'],
+			'post_content' => $content,
 			'post_status' => $post['status'],
 			'post_author' => $author,
 			'post_type' => $post['type'],
