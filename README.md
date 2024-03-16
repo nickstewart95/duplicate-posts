@@ -1,5 +1,7 @@
 # Auto Copy Posts for WordPress
 
+![banner](https://raw.githubusercontent.com/nickstewart95/auto-copy-posts-for-wordpress/main/banner-772x250.png)
+
 A simple WordPress plugin that can sync posts from one WordPress site to another using the REST API.
 
 ## How it works
@@ -133,7 +135,7 @@ May or may not get to these todo items, more so if I have time and noticed I sho
 - [x] Add timestamp when sync for post is completed
 - [x] Add functionality to sync an individual posts
 - [x] Rename the plugin for production use
-- [ ] Branding
+- [x] Branding
 - [ ] Space the jobs out (currently all the jobs just sorta fire)
 - [x] Remove related events when plugin is uninstalled
 - [ ] Copy over media
