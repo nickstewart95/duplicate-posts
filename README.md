@@ -137,3 +137,8 @@ May or may not get to these todo items, more so if I have time and noticed I sho
 - [ ] Space the jobs out (currently all the jobs just sorta fire)
 - [x] Remove related events when plugin is uninstalled
 - [ ] Copy over media
+
+## Credits
+
+- Icon comes from the [Material Symbols](https://fonts.google.com/icons) icon set
+- Using [Action Scheduler](https://actionscheduler.org/), [Blade](https://github.com/jenssegers/blade), [Carbon](https://carbon.nesbot.com/), and [Guzzle](https://github.com/guzzle/guzzle) under the hood
