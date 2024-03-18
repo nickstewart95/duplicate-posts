@@ -89,6 +89,20 @@ class AutoCopy {
 			1,
 		);
 
+		add_action(
+			'auto_copy_posts_delete_synced_posts',
+			[Events::class, 'deletePosts'],
+			10,
+			1,
+		);
+
+		add_action(
+			'auto_copy_posts_delete_post',
+			[Events::class, 'deletePost'],
+			10,
+			1,
+		);
+
 		add_action('admin_menu', [$this, 'add_metabox_to_posts']);
 		add_action('admin_menu', [$this, 'add_settings_page']);
 		add_action('wp_loaded', [$this, 'check_for_manual_sync']);
@@ -378,10 +392,16 @@ class AutoCopy {
 		$blade = $GLOBALS['blade'];
 		$notice = null;
 
-		if (isset($_GET['action']) && $_GET['action'] == 'dispatch') {
-			$notice = 'Sync scheduled';
+		if (isset($_GET['action'])) {
+			if ($_GET['action'] == 'dispatch') {
+				$notice = 'Sync scheduled';
 
-			do_action('auto_copy_posts_sync');
+				do_action('auto_copy_posts_sync');
+			} elseif ($_GET['action'] == 'delete') {
+				$notice = 'Sync posts scheduled to be deleted';
+
+				do_action('auto_copy_posts_delete_synced_posts');
+			}
 		}
 
 		echo $blade->render('admin.settings', [

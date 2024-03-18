@@ -4,6 +4,7 @@
     @endif
 	<h2>Auto Copy Posts for WordPress</h2>
     <br /><a href="/wp-admin/options-general.php?page=auto-copy-posts-wordpress&action=dispatch" class="button button-primary">Run Manual Sync</a>
+    <br /><br /><a href="/wp-admin/options-general.php?page=auto-copy-posts-wordpress&action=delete" class="button button-secondary">Delete Synced Posts</a>
     <form action="options.php" method="post">
     @php
         settings_fields('auto_copy_posts_wordpress');

@@ -101,11 +101,15 @@ Errors are logged to error.log inside the plugin folder
 
 `auto_copy_posts_sync` - Starts the sync
 
+`auto_copy_posts_delete_synced_posts` - Deletes posts that have been synced over
+
 ### Scheduled Events
 
 `auto_copy_posts_fetch_posts` - Fetches posts per page and then creates events for each
 
 `auto_copy_posts_create_post` - Creates/updates individual posts
+
+`auto_copy_posts_delete_post` - Deletes individual posts
 
 `auto_copy_posts_sync_single_post` - Syncs a single post
 

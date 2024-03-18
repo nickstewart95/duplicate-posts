@@ -143,7 +143,7 @@ class Events {
 
 		if ($skip_post) {
 			// Check if post already exists with same title
-			$post_exists = post_exists($post['title']['rendered']);
+			$post_exists = \post_exists($post['title']['rendered']);
 
 			if ($post_exists) {
 				delete_transient($transient);
@@ -466,5 +466,40 @@ WHERE meta_key = %s
 		}
 
 		self::schedulePostLoop($posts);
+	}
+
+	/**
+	 * Delete all synced posts
+	 */
+	public static function deletePosts(): void {
+		global $wpdb;
+
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"
+SELECT post_id, meta_value
+FROM {$wpdb->prefix}postmeta
+WHERE meta_key = %s
+",
+				'auto_copy_posts_original_id',
+			),
+		);
+
+		if (!empty($results)) {
+			foreach ($results as $result) {
+				as_schedule_single_action(
+					time(),
+					'auto_copy_posts_delete_post',
+					[
+						'post_id' => $result->post_id,
+					],
+					'auto_copy_posts_delete',
+				);
+			}
+		}
+	}
+
+	public static function deletePost(int $post_id): void {
+		wp_delete_post($post_id, true);
 	}
 }
