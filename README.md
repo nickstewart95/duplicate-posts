@@ -140,7 +140,8 @@ May or may not get to these todo items, more so if I have time and noticed I sho
 - [x] Branding
 - [ ] Space the jobs out (currently all the jobs just sorta fire)
 - [x] Remove related events when plugin is uninstalled
-- [ ] Copy over media
+- [x] Copy over media
+- [x] Add option to match on title
 
 ## Credits
 

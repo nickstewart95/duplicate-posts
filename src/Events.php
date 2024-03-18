@@ -6,6 +6,7 @@ use Nickstewart\AutoCopy\AutoCopy;
 use Nickstewart\AutoCopy\Posts;
 
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class Events {
 	/**
@@ -199,15 +200,6 @@ class Events {
 
 		$content = $post['content']['rendered'];
 
-		$download_images = apply_filters(
-			'auto_copy_posts_post_images',
-			AutoCopy::pluginSetting('auto_copy_posts_post_images'),
-		);
-
-		if ($download_images) {
-			// TODO - grab images in post, download theme, and make the url relative
-		}
-
 		// Setup post attributes
 		$data = [
 			'post_title' => $post['title']['rendered'],
@@ -244,6 +236,90 @@ class Events {
 				$featured_image_url,
 				$featured_image_alt_text,
 			);
+		}
+
+		$download_images = apply_filters(
+			'auto_copy_posts_post_images',
+			AutoCopy::pluginSetting('auto_copy_posts_post_images'),
+		);
+
+		$site_url = apply_filters(
+			'auto_copy_posts_site_url',
+			AutoCopy::pluginSetting('auto_copy_posts_site_url'),
+		);
+
+		$site_url = parse_url($site_url)['host'];
+		$site_url = str_replace('www.', '', $site_url);
+
+		if ($download_images) {
+			// Find images
+			try {
+				libxml_use_internal_errors(true);
+				$doc = new \DOMDocument();
+				$doc->loadHTML($content);
+				$images = $doc->getElementsByTagName('img');
+				libxml_use_internal_errors(false);
+			} catch (\Exception $e) {
+				AutoCopy::logError($e->getMessage());
+			}
+
+			// Loop thru images and only grab the ones that are local
+			$old_images = [];
+			if (!empty($images)) {
+				foreach ($images as $image) {
+					$source = $image->getAttribute('src');
+
+					// If the source contains the site url OR if its a relative url
+					if (
+						!empty($source) &&
+						(!empty(stristr($source, $site_url)) ||
+							empty(parse_url($source)['host']))
+					) {
+						// Create a random key
+						$key = Str::random(16);
+						if (!empty($old_images[$key])) {
+							$key = Str::random(16);
+						}
+
+						$old_images[$key] = $source;
+					}
+				}
+			}
+
+			// Download each image and store the URL
+			$new_images = [];
+			if (!empty($old_images)) {
+				foreach ($old_images as $key => $image) {
+					try {
+						$image_url = media_sideload_image(
+							$image,
+							$post_id,
+							'',
+							'src',
+						);
+
+						$new_images[$key] = $image_url;
+					} catch (\Exception $e) {
+						AutoCopy::logError($e->getMessage());
+					}
+				}
+			}
+
+			// Replace each instance in the post with the new URL
+			foreach ($old_images as $key => $image) {
+				if (!empty($new_images[$key])) {
+					$content = str_replace($image, $new_images[$key], $content);
+				}
+			}
+
+			// Update the post
+			$data['post_content'] = $content;
+
+			try {
+				wp_update_post($data);
+			} catch (\Exception $e) {
+				AutoCopy::logError($e->getMessage());
+			}
 		}
 	}
 
@@ -323,15 +399,18 @@ class Events {
 		string $featured_image_url,
 		string $description = null
 	): void {
-		// TODO - error handling, can result in timeout errors
-		$featured_image_attachment = media_sideload_image(
-			$featured_image_url,
-			$post_id,
-			$description,
-			'id',
-		);
+		try {
+			$featured_image_attachment = media_sideload_image(
+				$featured_image_url,
+				$post_id,
+				$description,
+				'id',
+			);
 
-		set_post_thumbnail($post_id, $featured_image_attachment);
+			set_post_thumbnail($post_id, $featured_image_attachment);
+		} catch (\Exception $e) {
+			AutoCopy::logError($e->getMessage());
+		}
 	}
 
 	/**

@@ -19,8 +19,8 @@ class AutoCopy {
 	const DEFAULT_POSTS_AUTHOR_ID = 1;
 	const DEFAULT_POST_TYPE_SINGLE = 'post';
 	const DEFAULT_POST_TYPE_PLURAL = 'posts';
-	const DEFAULT_LOG_ERRORS = true;
-	const DEFAULT_COPY_POST_IMAGES = false;
+	const DEFAULT_LOG_ERRORS = 'true';
+	const DEFAULT_COPY_POST_IMAGES = 'false';
 
 	/**
 	 * Class instance
