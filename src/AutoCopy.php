@@ -389,8 +389,22 @@ class AutoCopy {
 	 * Create the actual plugin settings page
 	 */
 	public function create_settings_page(): void {
+		global $wpdb;
+
 		$blade = $GLOBALS['blade'];
 		$notice = null;
+
+		$posts = $wpdb->get_results(
+			$wpdb->prepare(
+				"
+SELECT meta.`post_id`, meta.`meta_value`, posts.`post_title`, posts.`post_date`
+FROM {$wpdb->prefix}postmeta as `meta`
+LEFT JOIN {$wpdb->prefix}posts as `posts` ON meta.`post_id` = posts.`id`
+WHERE meta.`meta_key` = %s
+",
+				'auto_copy_posts_original_id',
+			),
+		);
 
 		if (isset($_GET['action'])) {
 			if ($_GET['action'] == 'dispatch') {
@@ -405,6 +419,7 @@ class AutoCopy {
 		}
 
 		echo $blade->render('admin.settings', [
+			'posts' => $posts,
 			'plugin_version' => AUTO_COPY_POSTS_VERSION,
 			'notice' => $notice,
 		]);
