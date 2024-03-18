@@ -136,6 +136,20 @@ class Events {
 			'auto_copy_posts_author_id',
 			AutoCopy::pluginSetting('auto_copy_posts_author_id'),
 		);
+		$skip_post = apply_filters(
+			'auto_copy_posts_post_title_matching',
+			AutoCopy::pluginSetting('auto_copy_posts_post_title_matching'),
+		);
+
+		if ($skip_post) {
+			// Check if post already exists with same title
+			$post_exists = post_exists($post['title']['rendered']);
+
+			if ($post_exists) {
+				delete_transient($transient);
+				return;
+			}
+		}
 
 		$featured_image_url = null;
 		$featured_image_alt_text = null;

@@ -7,7 +7,7 @@ use Nickstewart\AutoCopy\Events;
 use Carbon\Carbon;
 use Jenssegers\Blade\Blade;
 
-define('AUTO_COPY_POSTS_VERSION', '1.1.0');
+define('AUTO_COPY_POSTS_VERSION', '1.2.0');
 define('AUTO_COPY_POSTS_FILE', __FILE__);
 
 class AutoCopy {
@@ -21,6 +21,7 @@ class AutoCopy {
 	const DEFAULT_POST_TYPE_PLURAL = 'posts';
 	const DEFAULT_LOG_ERRORS = 'true';
 	const DEFAULT_COPY_POST_IMAGES = 'false';
+	const DEFAULT_POST_TITLE_MATCHING = 'false';
 
 	/**
 	 * Class instance
@@ -152,6 +153,13 @@ class AutoCopy {
 			10,
 			1,
 		);
+
+		add_filter(
+			'auto_copy_posts_post_title_matching',
+			[$this, 'filters_post_title_matching'],
+			10,
+			1,
+		);
 	}
 
 	/**
@@ -230,6 +238,16 @@ class AutoCopy {
 				'value' => get_option(
 					'auto_copy_posts_post_images',
 					self::DEFAULT_COPY_POST_IMAGES,
+				),
+			],
+			[
+				'name' => 'auto_copy_posts_post_title_matching',
+				'title' => 'Skip matching posts',
+				'description' =>
+					'If a post has the same title as a post being synced over, skip it',
+				'value' => get_option(
+					'auto_copy_posts_post_title_matching',
+					self::DEFAULT_POST_TITLE_MATCHING,
 				),
 			],
 		];
@@ -537,6 +555,13 @@ class AutoCopy {
 	}
 
 	/**
+	 * If existing posts share the same title as a new post, skip it
+	 */
+	public function filters_post_title_matching(bool $match): bool {
+		return $match;
+	}
+
+	/**
 	 * Return a post transient name with the option to create it
 	 */
 	public static function postTransient(
@@ -685,6 +710,19 @@ class AutoCopy {
 			$value = get_option(
 				'auto_copy_posts_post_images',
 				self::DEFAULT_COPY_POST_IMAGES,
+			);
+
+			if ($value == 'false' || !$value) {
+				return false;
+			}
+
+			return true;
+		}
+
+		if ($setting == 'auto_copy_posts_post_title_matching') {
+			$value = get_option(
+				'auto_copy_posts_post_title_matching',
+				self::DEFAULT_POST_TITLE_MATCHING,
 			);
 
 			if ($value == 'false' || !$value) {

@@ -15,6 +15,12 @@ A simple WordPress plugin that can sync posts from one WordPress site to another
 
 == Changelog ==
 
+= 1.2 =
+
+- Added title option matching
+- Added option to download post images
+- Bug fixes
+
 = 1.1 =
 
 - Remove plugin settings and actions when uninstalling

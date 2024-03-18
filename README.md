@@ -95,6 +95,8 @@ Errors are logged to error.log inside the plugin folder
 
 `auto_copy_posts_post_images` - If relative images are found in the post if they should be downloaded and made relative, default value is `false`
 
+`auto_copy_posts_post_title_matching` - If a post has the same title as a post being synced over, skip it
+
 ### Actions
 
 `auto_copy_posts_sync` - Starts the sync
