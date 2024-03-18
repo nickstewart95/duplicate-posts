@@ -218,6 +218,8 @@ class Events {
 		$data = [
 			'post_title' => $post['title']['rendered'],
 			'post_excerpt' => $post['excerpt']['rendered'],
+			'post_date' => $post['date'],
+			'post_date_gmt' => $post['date_gmt'],
 			'meta_input' => $meta,
 			'post_content' => $content,
 			'post_status' => $post['status'],
