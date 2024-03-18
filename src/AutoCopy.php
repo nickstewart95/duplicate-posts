@@ -406,6 +406,14 @@ WHERE meta.`meta_key` = %s
 			),
 		);
 
+		$errors = '';
+
+		$error_log = plugin_dir_path(__FILE__) . 'error.log';
+
+		if (file_exists($error_log)) {
+			$errors = nl2br(file_get_contents($error_log));
+		}
+
 		if (isset($_GET['action'])) {
 			if ($_GET['action'] == 'dispatch') {
 				$notice = 'Sync scheduled';
@@ -420,6 +428,7 @@ WHERE meta.`meta_key` = %s
 
 		echo $blade->render('admin.settings', [
 			'posts' => $posts,
+			'errors' => $errors,
 			'plugin_version' => AUTO_COPY_POSTS_VERSION,
 			'notice' => $notice,
 		]);

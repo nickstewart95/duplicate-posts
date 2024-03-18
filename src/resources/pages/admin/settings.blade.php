@@ -41,6 +41,14 @@
 			@endforeach
 		</tbody>
 	</table>
+	<h3>Errors</h3>
+	@if (!empty($errors))
+		<blockquote>
+			{!! $errors !!}
+		</blockquote>
+	@else
+		<p>No errors logged</p>
+	@endif
 	<h3>About</h3>
 	<p>Created by <a href="https://nickstewart.me">Nick Stewart</a>. Plugin documentation and developer guide can be found on <a href="https://github.com/nickstewart95/auto-copy-posts-for-wordpress">GitHub</a>.</p>
 	<p>Running version {{ $plugin_version }}</p>
