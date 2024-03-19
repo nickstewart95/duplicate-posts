@@ -137,9 +137,11 @@ class Events {
 			AutoCopy::pluginSetting('auto_copy_posts_post_title_matching'),
 		);
 
+		$title = html_entity_decode($post['title']['rendered']);
+
 		if ($skip_post) {
 			// Check if post already exists with same title
-			$post_exists = \post_exists($post['title']['rendered']);
+			$post_exists = \post_exists($title);
 
 			if ($post_exists) {
 				delete_transient($transient);
@@ -210,13 +212,15 @@ class Events {
 
 		$content = $post['content']['rendered'];
 
+		AutoCopy::logError(json_encode($post['_embedded']));
+
 		$author = self::createOrFindAuthor(
 			$post['_embedded']['author'][0]['slug'],
 		);
 
 		// Setup post attributes
 		$data = [
-			'post_title' => $post['title']['rendered'],
+			'post_title' => $title,
 			'post_excerpt' => $post['excerpt']['rendered'],
 			'post_date' => $post['date'],
 			'post_date_gmt' => $post['date_gmt'],
