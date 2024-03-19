@@ -132,10 +132,6 @@ class Events {
 		}
 
 		$post = json_decode($post_transient, true);
-		$author = apply_filters(
-			'auto_copy_posts_author_id',
-			AutoCopy::pluginSetting('auto_copy_posts_author_id'),
-		);
 		$skip_post = apply_filters(
 			'auto_copy_posts_post_title_matching',
 			AutoCopy::pluginSetting('auto_copy_posts_post_title_matching'),
@@ -213,6 +209,10 @@ class Events {
 		}
 
 		$content = $post['content']['rendered'];
+
+		$author = self::createOrFindAuthor(
+			$post['_embedded']['author'][0]['slug'],
+		);
 
 		// Setup post attributes
 		$data = [
@@ -427,6 +427,24 @@ class Events {
 		} catch (\Exception $e) {
 			AutoCopy::logError($e->getMessage());
 		}
+	}
+
+	/**
+	 * Look for the author locally by slug, if found return it, if not return the default
+	 */
+	public static function createOrFindAuthor(string $slug): int {
+		$user = get_user_by('slug', $slug);
+
+		if ($user) {
+			return $user->ID;
+		}
+
+		$author_id = apply_filters(
+			'auto_copy_posts_author_id',
+			AutoCopy::pluginSetting('auto_copy_posts_author_id'),
+		);
+
+		return $author_id;
 	}
 
 	/**
