@@ -212,11 +212,10 @@ class Events {
 
 		$content = $post['content']['rendered'];
 
-		AutoCopy::logError(json_encode($post['_embedded']));
-
-		$author = self::createOrFindAuthor(
-			$post['_embedded']['author'][0]['slug'],
-		);
+		$author_slug = !empty($post['_embedded']['author'][0]['slug'])
+			? $post['_embedded']['author'][0]['slug']
+			: false;
+		$author = self::createOrFindAuthor($author_slug);
 
 		// Setup post attributes
 		$data = [
@@ -436,17 +435,21 @@ class Events {
 	/**
 	 * Look for the author locally by slug, if found return it, if not return the default
 	 */
-	public static function createOrFindAuthor(string $slug): int {
+	public static function createOrFindAuthor(string|bool $slug): int {
+		$author_id = apply_filters(
+			'auto_copy_posts_author_id',
+			AutoCopy::pluginSetting('auto_copy_posts_author_id'),
+		);
+
+		if (!$slug) {
+			return $author_id;
+		}
+
 		$user = get_user_by('slug', $slug);
 
 		if ($user) {
 			return $user->ID;
 		}
-
-		$author_id = apply_filters(
-			'auto_copy_posts_author_id',
-			AutoCopy::pluginSetting('auto_copy_posts_author_id'),
-		);
 
 		return $author_id;
 	}
