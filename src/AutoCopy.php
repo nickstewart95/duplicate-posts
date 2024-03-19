@@ -356,6 +356,18 @@ class AutoCopy {
 	 * Call the metabox creation
 	 */
 	public function add_metabox_to_posts(): void {
+		$post_id = isset($_GET['post']) ? (int) $_GET['post'] : false;
+
+		if (!isset($post_id) && $post_id > 0) {
+			return;
+		}
+
+		$url = get_post_meta($post_id, 'auto_copy_posts_original_url', true);
+
+		if (empty($url)) {
+			return;
+		}
+
 		$post_type = apply_filters(
 			'auto_copy_posts_post_type_single',
 			self::pluginSetting('auto_copy_posts_post_type_single'),
