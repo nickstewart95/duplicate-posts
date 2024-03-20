@@ -143,6 +143,12 @@ class Events {
 			// Check if post already exists with same title
 			$post_exists = \post_exists($title);
 
+			// Do one more check, the encoding gets weird
+			$tmp_title = str_replace('`', '\'', $title);
+			$tmp_title = str_replace('’', '\'', $title);
+
+			$post_exists = \post_exists($tmp_title);
+
 			if ($post_exists) {
 				delete_transient($transient);
 				return;
