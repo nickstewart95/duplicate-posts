@@ -4,7 +4,7 @@ Author URI: https://nickstewart.me
 Tags: sync, copy, posts
 Requires at least: 5.3
 Tested up to: 6.1.1
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 Requires PHP: 8.0
 
 Sync posts from one Wordpress site to another
@@ -14,6 +14,16 @@ Sync posts from one Wordpress site to another
 A simple WordPress plugin that can sync posts from one WordPress site to another using the REST API.
 
 == Changelog ==
+
+= 1.5 =
+
+- Fixed a possible bug with reusing Blade global name
+- Fixed a bug with images always being copied, even if they were copied in the past
+- Added ability to delete duplicate images, from the above bug
+
+= 1.4 =
+
+- Bug fix, include Action Scheduler correctly
 
 = 1.3 =
 
