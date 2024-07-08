@@ -316,10 +316,10 @@ class Events {
 			if (!empty($old_images)) {
 				foreach ($old_images as $key => $image) {
 					try {
-						$image_url = media_sideload_image(
-							$image,
+						// Check if image exists already, upload if not
+						$image_url = self::duplicateCheck(
 							$post_id,
-							'',
+							$image,
 							'src',
 						);
 
@@ -425,14 +425,14 @@ class Events {
 		string $description = null
 	): void {
 		try {
-			$featured_image_attachment = media_sideload_image(
-				$featured_image_url,
+			// Check if image exists already, upload if not
+			$featured_image_asset = self::duplicateCheck(
 				$post_id,
-				$description,
+				$featured_image_url,
 				'id',
 			);
 
-			set_post_thumbnail($post_id, $featured_image_attachment);
+			set_post_thumbnail($post_id, $featured_image_asset);
 		} catch (\Exception $e) {
 			AutoCopy::logError($e->getMessage());
 		}
@@ -458,6 +458,62 @@ class Events {
 		}
 
 		return $author_id;
+	}
+
+	/**
+	 * Delete duplicate images
+	 */
+	public static function duplicateCheck(
+		$post_id,
+		$image_url,
+		$return
+	): string {
+		global $wpdb;
+
+		$return_type = $return == 'id' ? 'id' : 'src';
+
+		$existing_assets = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT post_id FROM $wpdb->postmeta WHERE meta_key='_source_url' AND meta_value='%s' ORDER BY meta_id ASC;",
+				$image_url,
+			),
+		);
+
+		if (count($existing_assets) > 0) {
+			// Delete duplicates
+			$delete_duplicate_images = apply_filters(
+				'auto_copy_posts_delete_duplicate_images',
+				AutoCopy::pluginSetting(
+					'auto_copy_posts_delete_duplicate_images',
+				),
+			);
+
+			// Always grab the first item
+			$image_id = reset($existing_assets)->post_id;
+
+			if ($delete_duplicate_images && count($existing_assets) > 1) {
+				// Remove the first item and then delete the rest
+				array_shift($existing_assets);
+
+				foreach ($existing_assets as $existing_asset) {
+					wp_delete_attachment($existing_asset->post_id, true);
+				}
+			}
+
+			$image =
+				$return_type == 'src'
+					? wp_get_attachment_url($image_id)
+					: $image_id;
+		} else {
+			$image = media_sideload_image(
+				$image_url,
+				$post_id,
+				'',
+				$return_type,
+			);
+		}
+
+		return $image;
 	}
 
 	/**

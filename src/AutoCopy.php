@@ -22,6 +22,7 @@ class AutoCopy {
 	const DEFAULT_LOG_ERRORS = 'true';
 	const DEFAULT_COPY_POST_IMAGES = 'false';
 	const DEFAULT_POST_TITLE_MATCHING = 'false';
+	const DEFAULT_DELETE_DUPLICATE_IMAGES = 'false';
 
 	/**
 	 * Class instance
@@ -174,6 +175,13 @@ class AutoCopy {
 			10,
 			1,
 		);
+
+		add_filter(
+			'auto_copy_posts_delete_duplicate_images',
+			[$this, 'filters_post_delete_duplicate_images'],
+			10,
+			1,
+		);
 	}
 
 	/**
@@ -252,6 +260,16 @@ class AutoCopy {
 				'value' => get_option(
 					'auto_copy_posts_post_images',
 					self::DEFAULT_COPY_POST_IMAGES,
+				),
+			],
+			[
+				'name' => 'auto_copy_posts_delete_duplicate_images',
+				'title' => 'Delete duplicate images',
+				'description' =>
+					'If more than one copy of an copied image already exists locally, delete the duplicates ',
+				'value' => get_option(
+					'auto_copy_posts_delete_duplicate_images',
+					self::DEFAULT_DELETE_DUPLICATE_IMAGES,
 				),
 			],
 			[
@@ -618,6 +636,13 @@ WHERE meta.`meta_key` = %s
 	}
 
 	/**
+	 * If more than one copy of an copied image already exists locally, delete the duplicates
+	 */
+	public function filters_post_delete_duplicate_images(bool $filter): bool {
+		return $filter;
+	}
+
+	/**
 	 * Return a post transient name with the option to create it
 	 */
 	public static function postTransient(
@@ -779,6 +804,19 @@ WHERE meta.`meta_key` = %s
 			$value = get_option(
 				'auto_copy_posts_post_title_matching',
 				self::DEFAULT_POST_TITLE_MATCHING,
+			);
+
+			if ($value == 'false' || !$value) {
+				return false;
+			}
+
+			return true;
+		}
+
+		if ($setting == 'auto_copy_posts_delete_duplicate_images') {
+			$value = get_option(
+				'auto_copy_posts_delete_duplicate_images',
+				self::DEFAULT_DELETE_DUPLICATE_IMAGES,
 			);
 
 			if ($value == 'false' || !$value) {
