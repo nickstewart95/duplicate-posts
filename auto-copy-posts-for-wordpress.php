@@ -15,8 +15,14 @@ if (file_exists(__DIR__ . '/src/vendor/autoload.php')) {
 	require_once __DIR__ . '/src/vendor/autoload.php';
 }
 
-if (file_exists(__DIR__ . '/src/vendor/woocommerce/action-scheduler/action-scheduler.php')) {
-	require_once __DIR__ . '/src/vendor/woocommerce/action-scheduler/action-scheduler.php';
+if (
+	file_exists(
+		__DIR__ .
+			'/src/vendor/woocommerce/action-scheduler/action-scheduler.php',
+	)
+) {
+	require_once __DIR__ .
+		'/src/vendor/woocommerce/action-scheduler/action-scheduler.php';
 }
 
 require_once ABSPATH . 'wp-admin/includes/media.php';
@@ -29,4 +35,4 @@ use Nickstewart\AutoCopy\AutoCopy;
 $auto_copy = AutoCopy::get_instance();
 $auto_copy->setup();
 
-$GLOBALS['blade'] = $auto_copy->initBladeViews();
+$GLOBALS['blade-autocopy'] = $auto_copy->initBladeViews();

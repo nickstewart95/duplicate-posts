@@ -403,7 +403,7 @@ class AutoCopy {
 	public function create_settings_page(): void {
 		global $wpdb;
 
-		$blade = $GLOBALS['blade'];
+		$blade = $GLOBALS['blade-autocopy'];
 		$notice = null;
 
 		$posts = $wpdb->get_results(
@@ -457,7 +457,7 @@ WHERE meta.`meta_key` = %s
 	 * Render settings output
 	 */
 	public function render_settings_field($args): void {
-		$blade = $GLOBALS['blade'];
+		$blade = $GLOBALS['blade-autocopy'];
 
 		echo $blade->render('admin.partials.text-input', [
 			'args' => $args,
