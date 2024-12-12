@@ -24,6 +24,8 @@ class AutoCopy {
 	const DEFAULT_POST_TITLE_MATCHING = 'false';
 	const DEFAULT_DELETE_DUPLICATE_IMAGES = 'false';
 
+	const FIELDS_PER_GROUP = 5;
+
 	/**
 	 * Class instance
 	 */
@@ -226,24 +228,6 @@ class AutoCopy {
 				),
 			],
 			[
-				'name' => 'auto_copy_posts_post_type_single',
-				'title' => 'Post Type, single',
-				'description' => 'The post type being synced, singular name',
-				'value' => get_option(
-					'auto_copy_posts_post_type_single',
-					self::DEFAULT_POST_TYPE_SINGLE,
-				),
-			],
-			[
-				'name' => 'auto_copy_posts_post_type_plural',
-				'title' => 'Post Type, plural',
-				'description' => 'The post type being synced, plural name',
-				'value' => get_option(
-					'auto_copy_posts_post_type_plural',
-					self::DEFAULT_POST_TYPE_PLURAL,
-				),
-			],
-			[
 				'name' => 'auto_copy_posts_log_errors',
 				'title' => 'Log plugin errors',
 				'description' => 'Log plugin errors to a local file',
@@ -286,6 +270,82 @@ class AutoCopy {
 	}
 
 	/**
+	 * Plugin post type settings
+	 */
+	public static function plugin_setting_post_type_fields(): array {
+		// Fetch post settings json
+		global $wpdb;
+		$saved_data = $wpdb->get_results(
+			"SELECT * FROM {$wpdb->prefix}options WHERE option_name LIKE 'auto_copy_posts_post_type_%' ORDER BY option_id",
+		);
+
+		$saved_data = get_option('auto_copy_posts_post_type_data', '');
+		$fields = [];
+
+		$default_fields = [
+			[
+				'name' => 'auto_copy_posts_custom_post_type_single_name_1',
+				'type' => 'text',
+				'title' => 'Post Type Single Name',
+				'description' => 'Single ame of the post type being synced',
+				'value' => self::DEFAULT_POST_TYPE_SINGLE,
+			],
+			[
+				'name' => 'auto_copy_posts_custom_post_type_plural_name_1',
+				'type' => 'text',
+				'title' => 'Post Type Plural Name',
+				'description' => 'Plural name of the post type being synced',
+				'value' => self::DEFAULT_POST_TYPE_PLURAL,
+			],
+			[
+				'name' => 'auto_copy_posts_custom_post_type_local_name_1',
+				'type' => 'text',
+				'title' => 'Post Type Destination Name',
+				'description' => 'Name of the local post type being synced',
+				'value' => self::DEFAULT_POST_TYPE_SINGLE,
+			],
+			[
+				'name' => 'auto_copy_posts_custom_post_type_content_field_1',
+				'type' => 'text',
+				'title' => 'Post Type Content Field',
+				'description' =>
+					'Optional, if the post content lives in a custom field',
+				'value' => '',
+			],
+			[
+				'name' =>
+					'auto_copy_posts_custom_post_type_featured_image_field_1',
+				'type' => 'text',
+				'title' => 'Post Type Featured Image Field',
+				'description' =>
+					'Optional, if the post featured image lives in a custom field',
+				'value' => '',
+			],
+		];
+
+		if (!empty($saved_data)) {
+			// 5 fields per post type
+			$groups = count($saved_data) / self::FIELDS_PER_GROUP;
+
+			for ($i = 1; $i < $groups; $i++) {
+				foreach ($default_fields as $field) {
+					$name = substr($field['name'], 0, -1) . $i;
+					$value = self::findObjectInArray($saved_data, $name);
+
+					$field['name'] = $name;
+					$feidl['value'] = $value;
+
+					$fields[] = $field;
+				}
+			}
+		} else {
+			$fields = $default_fields;
+		}
+
+		return $fields;
+	}
+
+	/**
 	 * Setup the plugin settings
 	 */
 	public function initSettings(): void {
@@ -298,6 +358,24 @@ class AutoCopy {
 		);
 
 		$fields = self::plugin_setting_fields();
+
+		foreach ($fields as $field) {
+			register_setting('auto_copy_posts_wordpress', $field['name'], [
+				'type' => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			]);
+
+			add_settings_field(
+				$field['name'],
+				$field['title'],
+				[$this, 'render_settings_field'],
+				'auto-copy-posts-wordpress',
+				'auto_copy_posts_wordpress_settings',
+				$field,
+			);
+		}
+
+		$fields = self::plugin_setting_post_type_fields();
 
 		foreach ($fields as $field) {
 			register_setting('auto_copy_posts_wordpress', $field['name'], [
@@ -827,5 +905,27 @@ WHERE meta.`meta_key` = %s
 		}
 
 		return '';
+	}
+
+	/**
+	 * Find object in array by value
+	 * https://stackoverflow.com/questions/7106772/most-efficient-way-to-search-for-object-in-an-array-by-a-specific-propertys-val
+	 */
+	public static function findObjectInArray(
+		array $array,
+		string $value
+	): object|bool {
+		$result = null;
+
+		foreach ($array as $object) {
+			if ($object->option_name === $value) {
+				$result = $object;
+				break;
+			}
+		}
+		unset($object);
+		$obj = $result ?? false;
+
+		return $obj;
 	}
 }
