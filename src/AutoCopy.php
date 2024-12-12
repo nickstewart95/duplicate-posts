@@ -515,21 +515,21 @@ WHERE meta.`meta_key` = %s
 			? $_GET['auto_copy_posts_syncing']
 			: false;
 
-		// TODO - refactor into a template
-		$html = "<b>URL:</b> <a href='{$url}' target='_blank'>{$url}</a><br /><b>Last modified:</b> {$modification_date_formatted}<br /><b>Last synced:</b> {$last_synced_date_formatted}</p>";
+		$blade = $GLOBALS['blade-autocopy'];
 
-		if ($is_syncing) {
-			$html .= '<p>Syncing...</p>';
-		} else {
-			global $wp;
-			$current_url =
-				'/wp-admin/post.php' . add_query_arg($_GET, $wp->request);
-			$sync_url = $current_url . '&auto_copy_posts_syncing=true';
+		global $wp;
+		$current_url =
+			'/wp-admin/post.php' . add_query_arg($_GET, $wp->request);
+		$sync_url = $current_url . '&auto_copy_posts_syncing=true';
 
-			$html .= "<p><a href='{$sync_url}' class='button button-primary'>Sync</a></p>";
-		}
-
-		echo $html;
+		echo $blade->render('admin.partials.metabox', [
+			'url' => $url,
+			'modification_date_formatted' => $modification_date_formatted,
+			'last_synced_date_formatted' => $last_synced_date_formatted,
+			'is_syncing' => $is_syncing,
+			'current_url' => $current_url,
+			'sync_url' => $sync_url,
+		]);
 	}
 
 	/**
