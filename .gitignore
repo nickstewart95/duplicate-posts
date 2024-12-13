@@ -4,3 +4,5 @@
 .DS_STORE
 error.log
 auto-copy-posts-for-wordpress.zip
+node_modules/
+.parcel-cache
