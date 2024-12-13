@@ -4,7 +4,7 @@ Author URI: https://nickstewart.me
 Tags: sync, copy, posts
 Requires at least: 5.3
 Tested up to: 6.1.1
-Stable tag: 1.5.0
+Stable tag: 1.6.0
 Requires PHP: 8.0
 
 Sync posts from one Wordpress site to another
@@ -14,6 +14,13 @@ Sync posts from one Wordpress site to another
 A simple WordPress plugin that can sync posts from one WordPress site to another using the REST API.
 
 == Changelog ==
+
+= 1.6 =
+
+- Added ability for multiple post types to be synced
+- Added ability to set the local post type
+- Removed filters for the single and plural post type
+- Refactored metabox into a Blade template
 
 = 1.5 =
 

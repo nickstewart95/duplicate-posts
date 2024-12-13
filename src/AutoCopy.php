@@ -7,7 +7,7 @@ use Nickstewart\AutoCopy\Events;
 use Carbon\Carbon;
 use Jenssegers\Blade\Blade;
 
-define('AUTO_COPY_POSTS_VERSION', '1.5.0');
+define('AUTO_COPY_POSTS_VERSION', '1.6.0');
 define('AUTO_COPY_POSTS_FILE', __FILE__);
 
 class AutoCopy {
@@ -144,20 +144,6 @@ class AutoCopy {
 		);
 
 		add_filter(
-			'auto_copy_posts_post_type_single',
-			[$this, 'filters_post_type_single'],
-			10,
-			1,
-		);
-
-		add_filter(
-			'auto_copy_posts_post_type_plural',
-			[$this, 'filters_post_type_plural'],
-			10,
-			1,
-		);
-
-		add_filter(
 			'auto_copy_posts_log_errors',
 			[$this, 'filters_log_errors'],
 			10,
@@ -279,7 +265,6 @@ class AutoCopy {
 			"SELECT * FROM {$wpdb->prefix}options WHERE option_name LIKE 'auto_copy_posts_post_type_%' ORDER BY option_id",
 		);
 
-		$saved_data = get_option('auto_copy_posts_post_type_data', '');
 		$fields = [];
 
 		$default_fields = [
@@ -287,7 +272,7 @@ class AutoCopy {
 				'name' => 'auto_copy_posts_custom_post_type_single_name_1',
 				'type' => 'text',
 				'title' => 'Post Type Single Name',
-				'description' => 'Single ame of the post type being synced',
+				'description' => 'Single name of the post type being synced',
 				'value' => self::DEFAULT_POST_TYPE_SINGLE,
 			],
 			[
@@ -298,11 +283,22 @@ class AutoCopy {
 				'value' => self::DEFAULT_POST_TYPE_PLURAL,
 			],
 			[
-				'name' => 'auto_copy_posts_custom_post_type_local_name_1',
+				'name' =>
+					'auto_copy_posts_custom_post_type_local_single_name_1',
 				'type' => 'text',
-				'title' => 'Post Type Destination Name',
-				'description' => 'Name of the local post type being synced',
+				'title' => 'Post Type Single Destination Name',
+				'description' =>
+					'Single name of the local post type being synced',
 				'value' => self::DEFAULT_POST_TYPE_SINGLE,
+			],
+			[
+				'name' =>
+					'auto_copy_posts_custom_post_type_local_plural_name_1',
+				'type' => 'text',
+				'title' => 'Post Type Plural Destination Name',
+				'description' =>
+					'Plural name of the local post type being synced',
+				'value' => self::DEFAULT_POST_TYPE_PLURAL,
 			],
 			[
 				'name' => 'auto_copy_posts_custom_post_type_content_field_1',
@@ -324,6 +320,8 @@ class AutoCopy {
 		];
 
 		if (!empty($saved_data)) {
+			var_dump($saved_data);
+			die();
 			// 5 fields per post type
 			$groups = count($saved_data) / self::FIELDS_PER_GROUP;
 
@@ -464,19 +462,18 @@ class AutoCopy {
 			return;
 		}
 
-		$post_type = apply_filters(
-			'auto_copy_posts_post_type_single',
-			self::pluginSetting('auto_copy_posts_post_type_single'),
-		);
+		$post_types = self::possibleLocalPostTypes();
 
-		add_meta_box(
-			'auto_copy_posts_post_information',
-			'Auto Copy Post Information',
-			[$this, 'create_post_metabox'],
-			$post_type,
-			'side',
-			'high',
-		);
+		foreach ($post_types as $type) {
+			add_meta_box(
+				'auto_copy_posts_post_information',
+				'Auto Copy Post Information',
+				[$this, 'create_post_metabox'],
+				$type,
+				'side',
+				'high',
+			);
+		}
 	}
 
 	/**
@@ -838,20 +835,6 @@ WHERE meta.`meta_key` = %s
 			);
 		}
 
-		if ($setting == 'auto_copy_posts_post_type_single') {
-			return get_option(
-				'auto_copy_posts_post_type_single',
-				self::DEFAULT_POST_TYPE_SINGLE,
-			);
-		}
-
-		if ($setting == 'auto_copy_posts_post_type_plural') {
-			return get_option(
-				'auto_copy_posts_post_type_plural',
-				self::DEFAULT_POST_TYPE_PLURAL,
-			);
-		}
-
 		if ($setting == 'auto_copy_posts_log_errors') {
 			$value = get_option(
 				'auto_copy_posts_log_errors',
@@ -905,6 +888,96 @@ WHERE meta.`meta_key` = %s
 		}
 
 		return '';
+	}
+
+	/**
+	 * Returns possible post types
+	 */
+	public static function possibleLocalPostTypes(): array {
+		global $wpdb;
+		$saved_data = $wpdb->get_results(
+			"SELECT * FROM {$wpdb->prefix}options WHERE option_name LIKE 'auto_copy_posts_custom_post_type_local_single_name_%' ORDER BY option_id",
+		);
+
+		$post_types = [];
+
+		if (!empty($saved_data)) {
+			foreach ($saved_data as $field) {
+				$post_types[] = $field->option_value;
+			}
+		}
+
+		return $post_types;
+	}
+
+	/**
+	 * Returns possible external plural post types
+	 */
+	public static function possibleExternalPostTypes(): array {
+		global $wpdb;
+		$saved_data = $wpdb->get_results(
+			"SELECT * FROM {$wpdb->prefix}options WHERE option_name LIKE 'auto_copy_posts_custom_post_type_plural_name_%' ORDER BY option_id",
+		);
+
+		$post_types = [];
+
+		if (!empty($saved_data)) {
+			foreach ($saved_data as $field) {
+				$post_types[] = $field->option_value;
+			}
+		}
+
+		return $post_types;
+	}
+
+	/**
+	 * Returns the a local single post type from a external plural post type
+	 */
+	public static function pluralToLocalSinglePostType(string $plural): string {
+		global $wpdb;
+		$plural_query = $wpdb->get_results(
+			"SELECT * FROM {$wpdb->prefix}options WHERE option_name LIKE 'auto_copy_posts_custom_post_type_plural_name_%' AND option_value ='{$plural}' LIMIT 1",
+		);
+
+		if (empty($plural_query)) {
+			return self::DEFAULT_POST_TYPE_SINGLE;
+		}
+
+		$id = substr($plural_query->option_name, -1);
+		$local_post_type = $wpdb->get_results(
+			"SELECT * FROM {$wpdb->prefix}options WHERE option_name = 'auto_copy_posts_custom_post_type_local_single_name_{$id}' LIMIT 1",
+		);
+
+		if (empty($local_post_type)) {
+			return self::DEFAULT_POST_TYPE_SINGLE;
+		}
+
+		return $local_post_type->value;
+	}
+
+	/**
+	 * Returns the a local plural post type from a external plural post type
+	 */
+	public static function pluralToLocalPLuralPostType(string $plural): string {
+		global $wpdb;
+		$plural_query = $wpdb->get_results(
+			"SELECT * FROM {$wpdb->prefix}options WHERE option_name LIKE 'auto_copy_posts_custom_post_type_plural_name_%' AND option_value ='{$plural}' LIMIT 1",
+		);
+
+		if (empty($plural_query)) {
+			return self::DEFAULT_POST_TYPE_SINGLE;
+		}
+
+		$id = substr($plural_query->option_name, -1);
+		$local_post_type = $wpdb->get_results(
+			"SELECT * FROM {$wpdb->prefix}options WHERE option_name = 'auto_copy_posts_custom_post_type_local_plural_name_{$id}' LIMIT 1",
+		);
+
+		if (empty($local_post_type)) {
+			return self::DEFAULT_POST_TYPE_SINGLE;
+		}
+
+		return $local_post_type->value;
 	}
 
 	/**

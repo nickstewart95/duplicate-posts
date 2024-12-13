@@ -3,7 +3,7 @@
 /**
  * Plugin Name:       Auto Copy Posts for WordPress
  * Description:       Sync posts from one WordPress site to another
- * Version:           1.5.0
+ * Version:           1.6.0
  * Requires PHP:      8.0
  * Author:            Nick Stewart
  * Author URI:        https://nickstewart.me
