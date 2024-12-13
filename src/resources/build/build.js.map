@@ -1,0 +1,1 @@
+{"mappings":"ACAA,QAAQ,GAAG,CAAC","sources":["<anon>","src/resources/javascript/index.js"],"sourcesContent":["(() => {\nconsole.log('Hello world');\n\n})();\n//# sourceMappingURL=build.js.map\n","console.log('Hello world');\n"],"names":["console","log"],"version":3,"file":"build.js.map"}

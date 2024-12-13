@@ -109,6 +109,8 @@ class AutoCopy {
 		add_action('admin_menu', [$this, 'add_metabox_to_posts']);
 		add_action('admin_menu', [$this, 'add_settings_page']);
 		add_action('wp_loaded', [$this, 'check_for_manual_sync']);
+
+		add_action('admin_enqueue_scripts', [$this, 'pluginScriptsStyles']);
 	}
 
 	/**
@@ -436,6 +438,31 @@ class AutoCopy {
 		$cache = __DIR__ . '/cache';
 
 		return new Blade($views, $cache);
+	}
+
+	/**
+	 * Enqueue plugin scripts and styles
+	 */
+	public static function pluginScriptsStyles(): void {
+		$screen = get_current_screen();
+		if ($screen->base != 'settings_page_auto-copy-posts-wordpress') {
+			return;
+		}
+
+		wp_enqueue_script(
+			'auto-copy-posts-for-wordpress-script',
+			plugin_dir_url(__FILE__) . '/resources/build/build.js',
+			[],
+			AUTO_COPY_POSTS_VERSION,
+		);
+
+		wp_enqueue_style(
+			'auto-copy-posts-for-wordpress-style',
+			plugin_dir_url(__FILE__) . '/resources/build/build.css',
+			[],
+			AUTO_COPY_POSTS_VERSION,
+			false,
+		);
 	}
 
 	/**
