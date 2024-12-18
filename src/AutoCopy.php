@@ -24,7 +24,7 @@ class AutoCopy {
 	const DEFAULT_POST_TITLE_MATCHING = 'false';
 	const DEFAULT_DELETE_DUPLICATE_IMAGES = 'false';
 
-	const FIELDS_PER_GROUP = 5;
+	const FIELDS_PER_GROUP = 6;
 
 	/**
 	 * Class instance
@@ -110,7 +110,14 @@ class AutoCopy {
 		add_action('admin_menu', [$this, 'add_settings_page']);
 		add_action('wp_loaded', [$this, 'check_for_manual_sync']);
 
-		add_action('admin_enqueue_scripts', [$this, 'pluginScriptsStyles']);
+		add_action(
+			'admin_enqueue_scripts',
+			[$this, 'pluginScriptsStyles'],
+			10,
+			0,
+		);
+
+		add_action('admin_init', [$this, 'saveUnregisteredSettings'], 10, 0);
 	}
 
 	/**
@@ -264,7 +271,7 @@ class AutoCopy {
 		// Fetch post settings json
 		global $wpdb;
 		$saved_data = $wpdb->get_results(
-			"SELECT * FROM {$wpdb->prefix}options WHERE option_name LIKE 'auto_copy_posts_post_type_%' ORDER BY option_id",
+			"SELECT * FROM {$wpdb->prefix}options WHERE option_name LIKE 'auto_copy_posts_custom_post_%' ORDER BY option_id",
 		);
 
 		$fields = [];
@@ -273,14 +280,14 @@ class AutoCopy {
 			[
 				'name' => 'auto_copy_posts_custom_post_type_single_name_1',
 				'type' => 'text',
-				'title' => 'Post Type Single Name',
+				'title' => 'Post Type Single Name - 1',
 				'description' => 'Single name of the post type being synced',
 				'value' => self::DEFAULT_POST_TYPE_SINGLE,
 			],
 			[
 				'name' => 'auto_copy_posts_custom_post_type_plural_name_1',
 				'type' => 'text',
-				'title' => 'Post Type Plural Name',
+				'title' => 'Post Type Plural Name - 1',
 				'description' => 'Plural name of the post type being synced',
 				'value' => self::DEFAULT_POST_TYPE_PLURAL,
 			],
@@ -288,7 +295,7 @@ class AutoCopy {
 				'name' =>
 					'auto_copy_posts_custom_post_type_local_single_name_1',
 				'type' => 'text',
-				'title' => 'Post Type Single Destination Name',
+				'title' => 'Post Type Single Destination Name - 1',
 				'description' =>
 					'Single name of the local post type being synced',
 				'value' => self::DEFAULT_POST_TYPE_SINGLE,
@@ -297,7 +304,7 @@ class AutoCopy {
 				'name' =>
 					'auto_copy_posts_custom_post_type_local_plural_name_1',
 				'type' => 'text',
-				'title' => 'Post Type Plural Destination Name',
+				'title' => 'Post Type Plural Destination Name - 1',
 				'description' =>
 					'Plural name of the local post type being synced',
 				'value' => self::DEFAULT_POST_TYPE_PLURAL,
@@ -305,7 +312,7 @@ class AutoCopy {
 			[
 				'name' => 'auto_copy_posts_custom_post_type_content_field_1',
 				'type' => 'text',
-				'title' => 'Post Type Content Field',
+				'title' => 'Post Type Content Field - 1',
 				'description' =>
 					'Optional, if the post content lives in a custom field',
 				'value' => '',
@@ -314,7 +321,7 @@ class AutoCopy {
 				'name' =>
 					'auto_copy_posts_custom_post_type_featured_image_field_1',
 				'type' => 'text',
-				'title' => 'Post Type Featured Image Field',
+				'title' => 'Post Type Featured Image Field - 1',
 				'description' =>
 					'Optional, if the post featured image lives in a custom field',
 				'value' => '',
@@ -322,18 +329,20 @@ class AutoCopy {
 		];
 
 		if (!empty($saved_data)) {
-			var_dump($saved_data);
-			die();
-			// 5 fields per post type
+			// 6 fields per post type
 			$groups = count($saved_data) / self::FIELDS_PER_GROUP;
 
-			for ($i = 1; $i < $groups; $i++) {
+			for ($i = 0; $i < $groups; $i++) {
+				$key = $i + 1;
+
 				foreach ($default_fields as $field) {
-					$name = substr($field['name'], 0, -1) . $i;
-					$value = self::findObjectInArray($saved_data, $name);
+					$name = substr($field['name'], 0, -1) . $key;
+					$title = str_replace('- 1', '- ' . $key, $field['title']);
+					$value = get_option($name); // the SQL query results gets cached, get_option does not
 
 					$field['name'] = $name;
-					$feidl['value'] = $value;
+					$field['title'] = $title;
+					$field['value'] = $value;
 
 					$fields[] = $field;
 				}
@@ -361,7 +370,6 @@ class AutoCopy {
 
 		foreach ($fields as $field) {
 			register_setting('auto_copy_posts_wordpress', $field['name'], [
-				'type' => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
 			]);
 
@@ -392,6 +400,64 @@ class AutoCopy {
 				$field,
 			);
 		}
+	}
+
+	/**
+	 * Save settings that have not been registered yet
+	 */
+	public function saveUnregisteredSettings(): void {
+		if (empty($_POST)) {
+			return;
+		}
+
+		if (!is_admin()) {
+			return;
+		}
+
+		global $pagenow;
+
+		if ($pagenow !== 'options.php') {
+			return;
+		}
+
+		if (
+			!isset($_POST['option_page']) &&
+			$_POST['option_page'] !== 'auto_copy_posts_wordpress'
+		) {
+			return;
+		}
+
+		// Remove fields that are already registered
+		$data = $_POST;
+		$default_fields = self::plugin_setting_fields();
+		$default_post_type_fields = self::plugin_setting_post_type_fields();
+
+		foreach ($default_fields as $field) {
+			unset($data[$field['name']]);
+		}
+
+		foreach ($default_post_type_fields as $field) {
+			unset($data[$field['name']]);
+		}
+
+		// One last check to prevent data from sneaking in
+		$fields_to_update = [];
+		foreach ($data as $key => $value) {
+			$test = preg_match('/auto_copy_posts_custom_post_type_/', $key);
+
+			if ($test) {
+				$clean_value = sanitize_text_field($value);
+
+				$fields_to_update[$key] = $clean_value;
+			}
+		}
+
+		// Update fields
+		foreach ($fields_to_update as $key => $value) {
+			update_option($key, $value);
+		}
+
+		return;
 	}
 
 	/**
@@ -1005,27 +1071,5 @@ WHERE meta.`meta_key` = %s
 		}
 
 		return $local_post_type->value;
-	}
-
-	/**
-	 * Find object in array by value
-	 * https://stackoverflow.com/questions/7106772/most-efficient-way-to-search-for-object-in-an-array-by-a-specific-propertys-val
-	 */
-	public static function findObjectInArray(
-		array $array,
-		string $value
-	): object|bool {
-		$result = null;
-
-		foreach ($array as $object) {
-			if ($object->option_name === $value) {
-				$result = $object;
-				break;
-			}
-		}
-		unset($object);
-		$obj = $result ?? false;
-
-		return $obj;
 	}
 }

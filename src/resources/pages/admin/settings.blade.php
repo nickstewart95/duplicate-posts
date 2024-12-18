@@ -10,10 +10,13 @@
 		<a href="/wp-admin/options-general.php?page=auto-copy-posts-wordpress&action=dispatch" class="button button-primary">Run Manual Sync</a>
 		<a href="/wp-admin/options-general.php?page=auto-copy-posts-wordpress&action=delete" class="button button-secondary">Delete Synced Posts</a>
 	</div>
-	<form action="options.php" method="post">
+	<form id="settings-form" action="options.php" method="post">
 	@php
 		settings_fields('auto_copy_posts_wordpress');
 		do_settings_sections('auto-copy-posts-wordpress');
+	@endphp
+		<button id="add-post-type" class="button button-secondary">Add post type</button>
+	@php
 		submit_button('Save Settings');
 	@endphp
 	</form>

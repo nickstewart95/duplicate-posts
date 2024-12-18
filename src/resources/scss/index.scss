@@ -23,18 +23,23 @@ $secondary: #d1ccc0;
 		.notice {
 			color: $black;
 		}
+	}
 
-		.actions {
-			display: flex;
-			justify-content: flex-start;
-			align-items: center;
-			margin-left: -22px;
-			padding: 15px 20px;
-			background: $secondary;
+	.actions {
+		display: flex;
+		justify-content: flex-start;
+		align-items: center;
+		margin-left: -22px;
+		margin-bottom: 40px;
+		padding: 15px 20px;
+		background: $secondary;
 
-			a {
-				margin-right: 20px;
-			}
+		a {
+			margin-right: 20px;
 		}
+	}
+
+	#settings-form .form-table tr:nth-child(6n + 9) {
+		border-top: solid 1px $primary;
 	}
 }
