@@ -29,7 +29,7 @@ class AutoCopy {
 	/**
 	 * Class instance
 	 */
-	public static function get_instance() {
+	public static function getInstance() {
 		if (null === self::$instance) {
 			self::$instance = new self();
 		}
@@ -54,7 +54,7 @@ class AutoCopy {
 	 */
 	public function delete(): void {
 		// Delete options
-		$fields = self::plugin_setting_fields();
+		$fields = self::pluginSettingFields();
 
 		foreach ($fields as $field) {
 			delete_option($field['name']);
@@ -106,9 +106,9 @@ class AutoCopy {
 			1,
 		);
 
-		add_action('admin_menu', [$this, 'add_metabox_to_posts']);
-		add_action('admin_menu', [$this, 'add_settings_page']);
-		add_action('wp_loaded', [$this, 'check_for_manual_sync']);
+		add_action('admin_menu', [$this, 'addMetaboxToPosts']);
+		add_action('admin_menu', [$this, 'addSettingsPage']);
+		add_action('wp_loaded', [$this, 'checkForManualSync']);
 
 		add_action(
 			'admin_enqueue_scripts',
@@ -127,56 +127,51 @@ class AutoCopy {
 	public function initFilters(): void {
 		add_filter(
 			'auto_copy_posts_sync_schedule',
-			[$this, 'filter_sync_schedule'],
+			[$this, 'filterSyncSchedule'],
 			10,
 			1,
 		);
 
-		add_filter(
-			'auto_copy_posts_site_url',
-			[$this, 'filter_site_url'],
-			10,
-			1,
-		);
+		add_filter('auto_copy_posts_site_url', [$this, 'filterSiteUrl'], 10, 1);
 
 		add_filter(
 			'auto_copy_posts_post_per_page',
-			[$this, 'filter_posts_per_page'],
+			[$this, 'filterPostsPerPage'],
 			10,
 			1,
 		);
 
 		add_filter(
 			'auto_copy_posts_author_id',
-			[$this, 'filters_author_id'],
+			[$this, 'filtersAuthorId'],
 			10,
 			1,
 		);
 
 		add_filter(
 			'auto_copy_posts_log_errors',
-			[$this, 'filters_log_errors'],
+			[$this, 'filtersLogErrors'],
 			10,
 			1,
 		);
 
 		add_filter(
 			'auto_copy_posts_post_images',
-			[$this, 'filters_post_images'],
+			[$this, 'filtersPostImages'],
 			10,
 			1,
 		);
 
 		add_filter(
 			'auto_copy_posts_post_title_matching',
-			[$this, 'filters_post_title_matching'],
+			[$this, 'filtersPostTitleMatching'],
 			10,
 			1,
 		);
 
 		add_filter(
 			'auto_copy_posts_delete_duplicate_images',
-			[$this, 'filters_post_delete_duplicate_images'],
+			[$this, 'filtersPostDeleteDuplicateImages'],
 			10,
 			1,
 		);
@@ -185,7 +180,7 @@ class AutoCopy {
 	/**
 	 * Plugin settings
 	 */
-	public static function plugin_setting_fields(): array {
+	public static function pluginSettingFields(): array {
 		return [
 			[
 				'name' => 'auto_copy_posts_sync_schedule',
@@ -367,7 +362,7 @@ class AutoCopy {
 			'auto-copy-posts-wordpress',
 		);
 
-		$fields = self::plugin_setting_fields();
+		$fields = self::pluginSettingFields();
 
 		foreach ($fields as $field) {
 			register_setting('auto_copy_posts_wordpress', $field['name'], [
@@ -413,7 +408,7 @@ class AutoCopy {
 
 		// Remove fields that are already registered
 		$data = $_POST;
-		$default_fields = self::plugin_setting_fields();
+		$default_fields = self::pluginSettingFields();
 		$default_post_type_fields = self::plugin_setting_post_type_fields();
 
 		foreach ($default_fields as $field) {
@@ -526,7 +521,7 @@ class AutoCopy {
 	/**
 	 * Call the metabox creation
 	 */
-	public function add_metabox_to_posts(): void {
+	public function addMetaboxToPosts(): void {
 		$post_id = isset($_GET['post']) ? (int) $_GET['post'] : false;
 
 		if (!isset($post_id) && $post_id > 0) {
@@ -556,7 +551,7 @@ class AutoCopy {
 	/**
 	 * Add the plugin settings page
 	 */
-	public function add_settings_page(): void {
+	public function addSettingsPage(): void {
 		// TODO - add filter for who can view the plugin settings
 		add_options_page(
 			'Auto Copy Posts for WordPress',
@@ -723,7 +718,7 @@ WHERE meta.`meta_key` = %s
 	/**
 	 * Run a manual sync
 	 */
-	public function check_for_manual_sync(): void {
+	public function checkForManualSync(): void {
 		$is_syncing = !empty($_GET['auto_copy_posts_syncing'])
 			? $_GET['auto_copy_posts_syncing']
 			: false;
@@ -763,70 +758,70 @@ WHERE meta.`meta_key` = %s
 	/**
 	 * Filter for how often the sync should run
 	 */
-	public function filter_sync_schedule(string $schedule): string {
+	public function filterSyncSchedule(string $schedule): string {
 		return $schedule;
 	}
 
 	/**
 	 * Filter for the base site url
 	 */
-	public function filter_site_url(string $url): string {
+	public function filterSiteUrl(string $url): string {
 		return $url;
 	}
 
 	/**
 	 * Posts per page when hitting the REST API
 	 */
-	public function filter_posts_per_page(int|string $posts): int {
+	public function filterPostsPerPage(int|string $posts): int {
 		return (int) $posts;
 	}
 
 	/**
 	 * Posts per page when hitting the REST API
 	 */
-	public function filters_author_id(int|string $id): int {
+	public function filtersAuthorId(int|string $id): int {
 		return (int) $id;
 	}
 
 	/**
 	 * The post type used for adding the metabox
 	 */
-	public function filters_post_type_single(string $post_type): string {
+	public function filtersPostTypeSingle(string $post_type): string {
 		return $post_type;
 	}
 
 	/**
 	 * The post type used when hitting the REST API
 	 */
-	public function filters_post_type_plural(string $post_type): string {
+	public function filtersPostTypePlural(string $post_type): string {
 		return $post_type;
 	}
 
 	/**
 	 * The post type used when hitting the REST API
 	 */
-	public function filters_log_errors(bool $answer): bool {
+	public function filtersLogErrors(bool $answer): bool {
 		return $answer;
 	}
 
 	/**
 	 * The post type used when hitting the REST API
 	 */
-	public function filters_post_images(bool $filter): bool {
+	public function filtersPostImages(bool $filter): bool {
 		return $filter;
 	}
 
 	/**
 	 * If existing posts share the same title as a new post, skip it
 	 */
-	public function filters_post_title_matching(bool $match): bool {
+	public function filtersPostTitleMatching(bool $match): bool {
 		return $match;
 	}
 
 	/**
 	 * If more than one copy of an copied image already exists locally, delete the duplicates
 	 */
-	public function filters_post_delete_duplicate_images(bool $filter): bool {
+	public function filtersPostDeleteDuplicateImages(bool $filter): bool {
 		return $filter;
 	}
 

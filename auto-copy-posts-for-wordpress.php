@@ -32,7 +32,7 @@ require_once ABSPATH . 'wp-admin/includes/post.php';
 
 use Nickstewart\AutoCopy\AutoCopy;
 
-$auto_copy = AutoCopy::get_instance();
+$auto_copy = AutoCopy::getInstance();
 $auto_copy->setup();
 
 $GLOBALS['blade-autocopy'] = $auto_copy->initBladeViews();
