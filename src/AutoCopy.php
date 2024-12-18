@@ -118,6 +118,7 @@ class AutoCopy {
 		);
 
 		add_action('admin_init', [$this, 'saveUnregisteredSettings'], 10, 0);
+		add_action('admin_init', [$this, 'settingPageActions'], 10, 0);
 	}
 
 	/**
@@ -406,24 +407,7 @@ class AutoCopy {
 	 * Save settings that have not been registered yet
 	 */
 	public function saveUnregisteredSettings(): void {
-		if (empty($_POST)) {
-			return;
-		}
-
-		if (!is_admin()) {
-			return;
-		}
-
-		global $pagenow;
-
-		if ($pagenow !== 'options.php') {
-			return;
-		}
-
-		if (
-			!isset($_POST['option_page']) &&
-			$_POST['option_page'] !== 'auto_copy_posts_wordpress'
-		) {
+		if (!self::isSettingsRequest()) {
 			return;
 		}
 
@@ -612,16 +596,12 @@ WHERE meta.`meta_key` = %s
 			$errors = nl2br(file_get_contents($error_log));
 		}
 
-		if (isset($_GET['action'])) {
-			if ($_GET['action'] == 'dispatch') {
-				$notice = 'Sync scheduled';
-
-				do_action('auto_copy_posts_sync');
-			} elseif ($_GET['action'] == 'delete') {
-				$notice = 'Sync posts scheduled to be deleted';
-
-				do_action('auto_copy_posts_delete_synced_posts');
-			}
+		if (isset($_GET['notice'])) {
+			$notice = match ($_GET['notice']) {
+				'dispatch' => 'Sync scheduled',
+				'delete' => 'Sync posts scheduled to be deleted',
+				default => null,
+			};
 		}
 
 		echo $blade->render('admin.settings', [
@@ -648,6 +628,46 @@ WHERE meta.`meta_key` = %s
 		echo $blade->render('admin.partials.text-input', [
 			'args' => $args,
 		]);
+	}
+
+	/**
+	 * Setting page actions
+	 */
+	public function settingPageActions(): void {
+		if (!is_admin()) {
+			return;
+		}
+
+		if (
+			!isset($_GET['page']) &&
+			$_GET['page'] !== 'auto-copy-posts-wordpress'
+		) {
+			return;
+		}
+
+		if (!isset($_GET['action'])) {
+			return;
+		}
+
+		if ($_GET['action'] == 'dispatch') {
+			$url = admin_url(
+				'options-general.php?page=auto-copy-posts-wordpress&notice=dispatch',
+			);
+
+			wp_redirect($url);
+			die();
+
+			do_action('auto_copy_posts_sync');
+		} elseif ($_GET['action'] == 'delete') {
+			do_action('auto_copy_posts_delete_synced_posts');
+
+			$url = admin_url(
+				'options-general.php?page=auto-copy-posts-wordpress&notice=delete',
+			);
+
+			wp_redirect($url);
+			die();
+		}
 	}
 
 	/**
@@ -1071,5 +1091,33 @@ WHERE meta.`meta_key` = %s
 		}
 
 		return $local_post_type->value;
+	}
+
+	/**
+	 * Confirms if the request is coming from the settings page
+	 */
+	public static function isSettingsRequest(): bool {
+		if (empty($_POST)) {
+			return false;
+		}
+
+		if (!is_admin()) {
+			return false;
+		}
+
+		global $pagenow;
+
+		if ($pagenow !== 'options.php') {
+			return false;
+		}
+
+		if (
+			!isset($_POST['option_page']) &&
+			$_POST['option_page'] !== 'auto_copy_posts_wordpress'
+		) {
+			return false;
+		}
+
+		return true;
 	}
 }
