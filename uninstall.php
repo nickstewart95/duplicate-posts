@@ -10,5 +10,5 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 	die();
 }
 
-$auto_copy = AutoCopy::get_instance();
+$auto_copy = AutoCopy::getInstance();
 $auto_copy->delete();

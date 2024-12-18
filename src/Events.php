@@ -28,27 +28,31 @@ class Events {
 	 * Schedule the posts per page to prevent timeouts
 	 */
 	public static function schedulePosts(): void {
-		$response = Posts::requestPosts(1);
+		$post_types = AutoCopy::possibleExternalPostTypes();
 
-		if (!$response) {
-			return;
-		}
+		foreach ($post_types as $type) {
+			$response = Posts::requestPosts(1, $type);
 
-		$page_count = $response['page_count'];
-		$posts = $response['posts'];
+			if (!$response) {
+				continue;
+			}
 
-		self::schedulePostLoop($posts);
+			$page_count = $response['page_count'];
+			$posts = $response['posts'];
 
-		// Schedule the additional requests
-		for ($i = 2; $i < $page_count + 1; $i++) {
-			as_schedule_single_action(
-				time(),
-				'auto_copy_posts_fetch_posts',
-				[
-					'page' => $i,
-				],
-				'auto_copy_posts_fetch',
-			);
+			self::schedulePostLoop($posts);
+
+			// Schedule the additional requests
+			for ($i = 2; $i < $page_count + 1; $i++) {
+				as_schedule_single_action(
+					time(),
+					'auto_copy_posts_fetch_posts',
+					[
+						'page' => $i,
+					],
+					'auto_copy_posts_fetch',
+				);
+			}
 		}
 	}
 
@@ -97,12 +101,19 @@ class Events {
 	/**
 	 * Loop thru the posts array and schedule the post creation
 	 */
-	public static function schedulePostLoop(array|null $posts): void {
+	public static function schedulePostLoop(
+		array|null $posts,
+		string $post_type = null
+	): void {
 		if (empty($posts)) {
 			return;
 		}
 
+		$post_type = !empty($post_type) ?? AutoCopy::DEFAULT_POST_TYPE_PLURAL;
+
 		foreach ($posts as $post) {
+			$post['post_type_plural'] = $post_type;
+
 			// Post data is too large to pass to action, so we will store it temporarliy to pass and then delete
 			$transient = AutoCopy::postTransient($post, true);
 
@@ -132,6 +143,14 @@ class Events {
 		}
 
 		$post = json_decode($post_transient, true);
+		$post_type_plural = $post['post_type_plural'];
+		$local_post_type_single = AutoCopy::pluralToLocalSinglePostType(
+			$post_type_plural,
+		);
+		$local_post_type_plural = AutoCopy::pluralToLocalPLuralPostType(
+			$post_type_plural,
+		);
+
 		$skip_post = apply_filters(
 			'auto_copy_posts_post_title_matching',
 			AutoCopy::pluginSetting('auto_copy_posts_post_title_matching'),
@@ -141,13 +160,25 @@ class Events {
 
 		if ($skip_post) {
 			// Check if post already exists with same title
-			$post_exists = \post_exists($title);
+			$post_exists = \post_exists(
+				$title,
+				false,
+				false,
+				$local_post_type_single,
+				false,
+			);
 
 			// Do one more check, the encoding gets weird
 			$tmp_title = str_replace('`', '\'', $title);
 			$tmp_title = str_replace('’', '\'', $title);
 
-			$post_exists = \post_exists($tmp_title);
+			$post_exists = \post_exists(
+				$tmp_title,
+				false,
+				false,
+				$local_post_type_single,
+				false,
+			);
 
 			if ($post_exists) {
 				delete_transient($transient);
@@ -202,7 +233,11 @@ class Events {
 					);
 				} else {
 					// Create or find taxonomy
-					$taxonomy = self::createOrFindTaxonomy($term['taxonomy']);
+					$taxonomy = self::createOrFindTaxonomy(
+						$term['taxonomy'],
+						$local_post_type_single,
+						$local_post_type_plural,
+					);
 
 					// Insert taxonomy terms
 					$term_taxonomy_id = self::createOrFindTerm(
@@ -351,20 +386,14 @@ class Events {
 	/**
 	 * Create or find a taxonomy
 	 */
-	public static function createOrFindTaxonomy(string $name): string {
+	public static function createOrFindTaxonomy(
+		string $name,
+		string $post_type_single,
+		string $post_type_plural
+	): string {
 		if (taxonomy_exists($name)) {
 			return $name;
 		}
-
-		$post_type_single = apply_filters(
-			'auto_copy_posts_post_type_single',
-			AutoCopy::pluginSetting('auto_copy_posts_post_type_single'),
-		);
-
-		$post_type_plural = apply_filters(
-			'auto_copy_posts_post_type_plural',
-			AutoCopy::pluginSetting('auto_copy_posts_post_type_plural'),
-		);
 
 		// Create taxonomy
 		$args = [

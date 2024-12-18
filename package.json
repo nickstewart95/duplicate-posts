@@ -1,11 +1,25 @@
 {
 	"name": "auto-copy-posts-for-wordpress",
-	"version": "1.5.0",
+	"version": "1.6.0",
 	"description": "![banner](https://raw.githubusercontent.com/nickstewart95/auto-copy-posts-for-wordpress/main/banner-772x250.png)",
-	"main": "index.js",
+	"js": "src/resources/build/build.js",
+	"css": "src/resources/build/build.css",
+	"targets": {
+		"css": {
+			"source": "src/resources/scss/index.scss"
+		},
+		"js": {
+			"source": "src/resources/javascript/index.js"
+		}
+	},
 	"scripts": {
-		"package": "zip -r auto-copy-posts-for-wordpress.zip .  -x '.vscode/*' '.git/*' 'error.log' 'src/cache/*'"
+		"build": "parcel build",
+		"package": "zip -r auto-copy-posts-for-wordpress.zip .  -x '.vscode/*' '.git/*' '.parcel-cache/*' 'node_modules/' 'error.log' 'src/cache/*'"
 	},
 	"author": "Nick Stewart",
-	"license": "ISC"
+	"license": "ISC",
+	"devDependencies": {
+		"@parcel/transformer-sass": "^2.13.2",
+		"parcel": "^2.13.2"
+	}
 }

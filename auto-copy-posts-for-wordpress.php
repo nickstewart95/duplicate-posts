@@ -3,7 +3,7 @@
 /**
  * Plugin Name:       Auto Copy Posts for WordPress
  * Description:       Sync posts from one WordPress site to another
- * Version:           1.5.0
+ * Version:           1.6.0
  * Requires PHP:      8.0
  * Author:            Nick Stewart
  * Author URI:        https://nickstewart.me
@@ -32,7 +32,7 @@ require_once ABSPATH . 'wp-admin/includes/post.php';
 
 use Nickstewart\AutoCopy\AutoCopy;
 
-$auto_copy = AutoCopy::get_instance();
+$auto_copy = AutoCopy::getInstance();
 $auto_copy->setup();
 
 $GLOBALS['blade-autocopy'] = $auto_copy->initBladeViews();

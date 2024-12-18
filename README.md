@@ -87,10 +87,6 @@ Errors are logged to error.log inside the plugin folder
 
 `auto_copy_posts_author_id` - The author ID copied posts are associated with, default value is `1`
 
-`auto_copy_posts_post_type_single` - The post type being retrieved, singular form, default value is `post`
-
-`auto_copy_posts_post_type_plural` - The post type being retrieved, plural form, default value is `posts`
-
 `auto_copy_posts_log_errors` - If errors should be logged, default value is `true`
 
 `auto_copy_posts_post_images` - If relative images are found in the post if they should be downloaded and made relative, default value is `false`

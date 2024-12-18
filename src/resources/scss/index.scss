@@ -1,0 +1,67 @@
+$black: #000;
+$white: #fff;
+$primary: #2c2c54;
+$secondary: #d1ccc0;
+
+.settings_page_auto-copy-posts-wordpress {
+	#screen-meta-links,
+	.update-nag {
+		display: none;
+	}
+}
+
+.auto-copy-posts-for-wordpress {
+	margin-top: 0px;
+
+	.header {
+		display: grid;
+		grid-template-columns: 1fr;
+		width: 100%;
+		margin-top: -10px;
+		margin-left: -22px;
+		padding: 30px 20px;
+		background: $primary;
+		color: $white;
+
+		h2 {
+			color: $white;
+		}
+		.notice {
+			grid-row: 1;
+			color: $black;
+		}
+	}
+
+	.actions {
+		display: flex;
+		justify-content: flex-start;
+		align-items: center;
+		margin-left: -22px;
+		margin-bottom: 40px;
+		padding: 15px 20px;
+		width: 100%;
+		background: $secondary;
+
+		a {
+			margin-right: 20px;
+		}
+	}
+
+	#settings-form .form-table {
+		tbody {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+
+			tr {
+				grid-column: span 2;
+
+				&:nth-child(n + 9) {
+					grid-column: inherit;
+				}
+				&:nth-child(8) {
+					border-bottom: solid 1px $primary;
+				}
+			}
+		}
+	}
+}

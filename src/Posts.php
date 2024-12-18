@@ -10,13 +10,13 @@ class Posts {
 	/**
 	 * Helper function that returns a set of posts
 	 */
-	public static function requestPosts(int $page): bool|array {
+	public static function requestPosts(
+		int $page,
+		string $post_type = null
+	): bool|array {
 		$base_url = AutoCopy::getSiteUrl();
 
-		$post_type = apply_filters(
-			'auto_copy_posts_post_type_plural',
-			AutoCopy::pluginSetting('auto_copy_posts_post_type_plural'),
-		);
+		$post_type = $post_type ?? AutoCopy::DEFAULT_POST_TYPE_PLURAL;
 
 		$posts_per_page = apply_filters(
 			'auto_copy_posts_post_per_page',
