@@ -645,14 +645,14 @@ WHERE meta.`meta_key` = %s
 		}
 
 		if ($_GET['action'] == 'dispatch') {
+			do_action('auto_copy_posts_sync');
+
 			$url = admin_url(
 				'options-general.php?page=auto-copy-posts-wordpress&notice=dispatch',
 			);
 
 			wp_redirect($url);
 			die();
-
-			do_action('auto_copy_posts_sync');
 		} elseif ($_GET['action'] == 'delete') {
 			do_action('auto_copy_posts_delete_synced_posts');
 
